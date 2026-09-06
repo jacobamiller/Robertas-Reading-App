@@ -1,0 +1,223 @@
+{
+ "slug": "lindas-surprise",
+ "title": "Linda's Surprise",
+ "subtitle": "Reading Practice",
+ "tagline": "Read along, listen, and practise out loud.",
+ "credit": {
+  "html": "© 2026 Martha Matzke · <a href=\"http://creativecommons.org/licenses/by/4.0/\">CC BY 4.0</a><br>Illustrated by Grade 1 students, Solomon Islands"
+ },
+ "voiceSample": "Linda loved the kitten.",
+ "cover": "cover.webp",
+ "images": {
+  "1": "1.webp",
+  "2": "2.webp",
+  "3": "3.webp",
+  "4": "4.webp",
+  "5": "5.webp",
+  "6": "6.webp",
+  "7": "7.webp",
+  "8": "8.webp",
+  "9": "9.webp",
+  "10": "10.webp",
+  "11": "11.webp",
+  "cover": "cover.webp"
+ },
+ "pages": [
+  {
+   "img": "1",
+   "s": [
+    "This little girl is Linda.",
+    "She is five years old.",
+    "She likes to play with pets."
+   ]
+  },
+  {
+   "img": "2",
+   "s": [
+    "One day she asked her mother if she could have a pet.",
+    "Her mother said, Ask your Daddy when he comes home from work.",
+    "So Linda asked her father about a pet.",
+    "He said, \"Well, maybe\"."
+   ]
+  },
+  {
+   "img": "3",
+   "s": [
+    "Then one day Mother and Father took Linda to see Mr. and Mrs. Brown.",
+    "They had a pretty gray cat.",
+    "Linda loved the cat.",
+    "The cat was so soft and warm.",
+    "Linda played with the cat.",
+    "She sang about the cat all the way home."
+   ]
+  },
+  {
+   "img": "4",
+   "s": [
+    "Linda loved the cat so much that she ask to see it.",
+    "Mrs. Brown called the cat.",
+    "But the cat was busy.",
+    "\"The cat has a surprise for you,\" said Mrs. Brown.",
+    "\"Come and see it.\""
+   ]
+  },
+  {
+   "img": "5",
+   "s": [
+    "When they found her, Linda was suprised.",
+    "There in the box were five little kittens.",
+    "Two white and three were gray like the mother cat."
+   ]
+  },
+  {
+   "img": "6",
+   "s": [
+    "Linda wanted a kitten.",
+    "Her mother said to ask Daddy.",
+    "Daddy said the cat would not let them take away a kitten.",
+    "The kittens are too little, he said.",
+    "So Linda went home.",
+    "She thought and thought about the kittens.",
+    "How pretty they were.",
+    "Linda wanted a kitten."
+   ]
+  },
+  {
+   "img": "7",
+   "s": [
+    "Linda had a birthday.",
+    "She was six years old.",
+    "Her mother said they would go and eat lunch with Mrs. Brown.",
+    "Linda was happy.",
+    "She would see the kittens again.",
+    "Mrs. Brown said, \"Happy birthday, Linda.",
+    "You are a big girl now.\""
+   ]
+  },
+  {
+   "img": "8",
+   "s": [
+    "After lunch Linda played with the kittens.",
+    "Mrs. Brown said, \"Linda, you may have a kitten of your very own.",
+    "Which one would you like?\"",
+    "Oh, Linda was so happy.",
+    "She looked and looked.",
+    "Then she found a kitten.",
+    "It looked like the mother cat."
+   ]
+  },
+  {
+   "img": "9",
+   "s": [
+    "Linda loved the kitten.",
+    "They took the kitten home in a big brown basket."
+   ]
+  },
+  {
+   "img": "10",
+   "s": [
+    "The kitten did not like the basket.",
+    "She wanted out.",
+    "She cried and cried.",
+    "Finally she pushed and pushed on the top of the basket.",
+    "The basket opened up."
+   ]
+  },
+  {
+   "img": "11",
+   "s": [
+    "The kitten jumped out and she sat in Linda's lap.",
+    "Linda and the kitten sang all the way home."
+   ]
+  }
+ ],
+ "words": [
+  {
+   "w": "pet",
+   "en": "an animal you keep at home",
+   "zh": "宠物"
+  },
+  {
+   "w": "kitten",
+   "en": "a baby cat",
+   "zh": "小猫"
+  },
+  {
+   "w": "gray",
+   "en": "the colour between black and white",
+   "zh": "灰色"
+  },
+  {
+   "w": "surprise",
+   "en": "something happy you did not expect",
+   "zh": "惊喜"
+  },
+  {
+   "w": "basket",
+   "en": "a bag made of straw for carrying",
+   "zh": "篮子"
+  },
+  {
+   "w": "soft",
+   "en": "nice and gentle to touch",
+   "zh": "柔软的"
+  },
+  {
+   "w": "birthday",
+   "en": "the day you were born, once a year",
+   "zh": "生日"
+  },
+  {
+   "w": "lap",
+   "en": "the top of your legs when you sit",
+   "zh": "大腿上"
+  }
+ ],
+ "quiz": [
+  {
+   "q": "How old is Linda at the start of the story?",
+   "o": [
+    "Four",
+    "Five",
+    "Six"
+   ],
+   "a": 1
+  },
+  {
+   "q": "What did Mrs. Brown's cat have?",
+   "o": [
+    "Five kittens",
+    "A basket",
+    "A birthday"
+   ],
+   "a": 0
+  },
+  {
+   "q": "What does <b>kitten</b> mean?",
+   "o": [
+    "小狗",
+    "小猫",
+    "小鸟"
+   ],
+   "a": 1
+  },
+  {
+   "q": "Why could Linda not take a kitten home the first time?",
+   "o": [
+    "They were too little",
+    "She had no basket",
+    "Mother said no"
+   ],
+   "a": 0
+  },
+  {
+   "q": "Where did the kitten sit on the way home?",
+   "o": [
+    "In the basket",
+    "On the floor",
+    "In Linda's lap"
+   ],
+   "a": 2
+  }
+ ]
+}
