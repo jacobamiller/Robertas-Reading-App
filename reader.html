@@ -271,7 +271,7 @@ audio{width:100%;margin-top:10px}
     <div id="trows"></div>
     <p class="tstatus" id="tstatus"></p>
     <button class="tsend" id="tsend">Send these recordings</button>
-    <p class="tnote">The recordings stay on this phone until you send them.</p>
+    <p class="tnote" id="tnote">The recordings stay on this phone until you send them.</p>
   </div>
 </div>
 </div><!--device-->
@@ -938,11 +938,113 @@ async function loadBook(){
     const btn = $("tsend");
     btn.disabled    = !done || recording();
     btn.textContent = done ? "Send these recordings" : "Record a sentence first";
+    $("tnote").textContent = done
+      ? "They all go together as one file: " + zipName()
+      : "The recordings stay on this phone until you send them.";
     if(storeWarn && !$("tstatus").classList.contains("tbad")) say(storeWarn, true);
   }
 
-  /* ---- sending ---- */
-  function parts(){
+  /* ---- sending: everything leaves as one .zip -------------------------
+     Written by hand because the page carries no libraries. Entries are
+     STORED, not deflated: the clips are already Opus/AAC and JSON this
+     small gains nothing, and storing keeps the whole build synchronous,
+     which is what lets navigator.share() stay inside the tap.          */
+  let CRCT = null;
+  function crcTable(){
+    if(CRCT) return CRCT;
+    CRCT = new Uint32Array(256);
+    for(let n = 0; n < 256; n++){
+      let c = n;
+      for(let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      CRCT[n] = c >>> 0;
+    }
+    return CRCT;
+  }
+  function crc32(u8){
+    const t = crcTable();
+    let c = 0xFFFFFFFF;
+    for(let i = 0; i < u8.length; i++) c = t[(c ^ u8[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+  const dosTime = d => ((d.getHours() & 31) << 11) | ((d.getMinutes() & 63) << 5)
+                     | ((d.getSeconds() >> 1) & 31);
+  const dosDate = d => (((d.getFullYear() - 1980) & 127) << 9)
+                     | (((d.getMonth() + 1) & 15) << 5) | (d.getDate() & 31);
+
+  function makeZip(entries){
+    const te = (typeof TextEncoder !== "undefined") ? new TextEncoder() : null;
+    const nameBytes = n => {
+      if(te) return te.encode(n);
+      const u = new Uint8Array(n.length);
+      for(let i = 0; i < n.length; i++) u[i] = n.charCodeAt(i) & 0xFF;
+      return u;
+    };
+    const flags = te ? 0x0800 : 0;              // bit 11 = names are UTF-8
+    const body = [], central = [];
+    let offset = 0;
+
+    entries.forEach(e => {
+      const nb = nameBytes(e.name), size = e.bytes.length, crc = crc32(e.bytes);
+      const when = e.date || new Date();
+      const tm = dosTime(when), dt = dosDate(when);
+
+      const lh = new Uint8Array(30 + nb.length), lv = new DataView(lh.buffer);
+      lv.setUint32(0, 0x04034b50, true);
+      lv.setUint16(4, 20, true);                // version needed
+      lv.setUint16(6, flags, true);
+      lv.setUint16(8, 0, true);                 // 0 = stored
+      lv.setUint16(10, tm, true); lv.setUint16(12, dt, true);
+      lv.setUint32(14, crc, true);
+      lv.setUint32(18, size, true); lv.setUint32(22, size, true);
+      lv.setUint16(26, nb.length, true); lv.setUint16(28, 0, true);
+      lh.set(nb, 30);
+      body.push(lh, e.bytes);
+
+      const ch = new Uint8Array(46 + nb.length), cv = new DataView(ch.buffer);
+      cv.setUint32(0, 0x02014b50, true);
+      cv.setUint16(4, 20, true); cv.setUint16(6, 20, true);
+      cv.setUint16(8, flags, true);
+      cv.setUint16(10, 0, true);
+      cv.setUint16(12, tm, true); cv.setUint16(14, dt, true);
+      cv.setUint32(16, crc, true);
+      cv.setUint32(20, size, true); cv.setUint32(24, size, true);
+      cv.setUint16(28, nb.length, true);
+      cv.setUint16(30, 0, true); cv.setUint16(32, 0, true);
+      cv.setUint16(34, 0, true); cv.setUint16(36, 0, true);
+      cv.setUint32(38, 0, true);
+      cv.setUint32(42, offset, true);           // where its local header sits
+      ch.set(nb, 46);
+      central.push(ch);
+
+      offset += lh.length + size;
+    });
+
+    const cdSize = central.reduce((n, c) => n + c.length, 0);
+    const eo = new Uint8Array(22), ev = new DataView(eo.buffer);
+    ev.setUint32(0, 0x06054b50, true);
+    ev.setUint16(4, 0, true); ev.setUint16(6, 0, true);
+    ev.setUint16(8, entries.length, true); ev.setUint16(10, entries.length, true);
+    ev.setUint32(12, cdSize, true); ev.setUint32(16, offset, true);
+    ev.setUint16(20, 0, true);
+
+    return new Blob(body.concat(central, [eo]), {type: "application/zip"});
+  }
+
+  /* base64 -> bytes, cached on the item so a second tap costs nothing */
+  function bytesOf(i){
+    const it = items[i];
+    if(!it) return null;
+    if(it.bytes) return it.bytes;
+    if(!it.b64) return null;
+    const bin = atob(it.b64), u = new Uint8Array(bin.length);
+    for(let k = 0; k < bin.length; k++) u[k] = bin.charCodeAt(k);
+    it.bytes = u;
+    return u;
+  }
+  const stillSaving = () => Object.keys(items).some(k => !items[k].b64);
+  const zipName = () => slug + "_page" + (pageOf + 1) + ".zip";
+
+  function entriesForPage(){
     const n = PAGES[pageOf].s.length, out = [];
     const timings = {
       book: slug,
@@ -954,22 +1056,32 @@ async function loadBook(){
       sentences: []
     };
     for(let i = 0; i < n; i++){
-      const it = items[i];
-      if(!it) continue;
+      const it = items[i], bytes = bytesOf(i);
+      if(!it || !bytes) continue;
       const name = "p" + (pageOf+1) + "_s" + (i+1) + "." + EXT;
-      out.push({name: name, blob: it.blob});
+      out.push({name: name, bytes: bytes, date: new Date(it.at),
+                type: it.blob.type || MIME || "application/octet-stream"});
       timings.sentences.push({
         file: name, sentence: i + 1, text: PAGES[pageOf].s[i],
         ms: it.ms, seconds: +(it.ms/1000).toFixed(2),
         recordedAt: new Date(it.at).toISOString()
       });
     }
-    out.push({name: "timings.json",
-              blob: new Blob([JSON.stringify(timings, null, 1)], {type: "application/json"})});
+    if(!out.length) return null;
+    const json = JSON.stringify(timings, null, 1);
+    const jb = (typeof TextEncoder !== "undefined")
+      ? new TextEncoder().encode(json)
+      : (function(){ const u = new Uint8Array(json.length);
+                     for(let i = 0; i < json.length; i++) u[i] = json.charCodeAt(i) & 0xFF;
+                     return u; })();
+    out.push({name: "timings.json", bytes: jb, date: new Date(), type: "application/json"});
     return out;
   }
+
   function download(ps, why){
-    say(why + " Saving each recording to this phone instead — look in your Files or Downloads.", true);
+    const many = ps.length > 1;
+    say(why + " Saving " + (many ? "each recording" : "the file")
+        + " to this phone instead — look in your Files or Downloads.", true);
     ps.forEach((p, k) => setTimeout(() => {
       const u = URL.createObjectURL(p.blob);
       const a = document.createElement("a");
@@ -978,34 +1090,51 @@ async function loadBook(){
       setTimeout(() => URL.revokeObjectURL(u), 30000);
     }, k * 600));
   }
-  function send(){
-    const ps = parts();
-    if(ps.length < 2){ say("Record at least one sentence first.", true); return; }
 
-    if(typeof File !== "function"){
-      download(ps, "This browser cannot build files to share."); return;
-    }
-    let files;
-    try{
-      files = ps.map(p => new File([p.blob], p.name, {type: p.blob.type || "application/octet-stream"}));
-    }catch(e){
-      download(ps, "This browser cannot build files to share."); return;
-    }
-
+  function shareFiles(files, onFail){
     let why = "";
-    if(!navigator.share)                       why = "This browser cannot open the share sheet.";
-    else if(!navigator.canShare)               why = "This browser cannot check whether it can share files.";
-    else if(!navigator.canShare({files: files})) why = "This browser will not share sound files.";
-    if(why){ download(ps, why); return; }
-
-    // stays inside the tap, so iOS treats it as a user gesture
+    if(!navigator.share)                         why = "This browser cannot open the share sheet.";
+    else if(!navigator.canShare)                 why = "This browser cannot check whether it can share files.";
+    else if(!navigator.canShare({files: files})) why = "This browser will not share this file.";
+    if(why){ onFail(why); return; }
     navigator.share({files: files}).then(() => {
       say("Sent. Thank you!");
     }).catch(err => {
-      const name = (err && err.name) || "";
-      if(name === "AbortError"){ say(""); return; }     // teacher closed the sheet
-      download(ps, "The share sheet did not open (" + (name || "unknown error") + ").");
+      const nm = (err && err.name) || "";
+      if(nm === "AbortError"){ say(""); return; }        // teacher closed the sheet
+      onFail("The share sheet did not open (" + (nm || "unknown error") + ").");
     });
+  }
+
+  function send(){
+    const entries = entriesForPage();
+    if(!entries){ say("Record at least one sentence first.", true); return; }
+    if(stillSaving()){ say("Still saving the last recording — tap Send again in a moment.", true); return; }
+
+    // one zip, built synchronously so the tap still counts as a user gesture
+    let zip = null;
+    try{ zip = makeZip(entries); }catch(e){ zip = null; }
+
+    if(zip){
+      const one = [{name: zipName(), blob: zip}];
+      if(typeof File === "function"){
+        let zf = null;
+        try{ zf = new File([zip], zipName(), {type: "application/zip"}); }catch(e){ zf = null; }
+        if(zf){ shareFiles([zf], why => download(one, why)); return; }
+      }
+      download(one, "This browser cannot share files.");
+      return;
+    }
+
+    // zip could not be built at all: fall back to the clips on their own
+    const ps = entries.map(e => ({name: e.name, blob: new Blob([e.bytes], {type: e.type})}));
+    if(typeof File !== "function"){
+      download(ps, "This browser cannot package the recordings."); return;
+    }
+    let files = null;
+    try{ files = ps.map(p => new File([p.blob], p.name, {type: p.blob.type})); }catch(e){ files = null; }
+    if(!files){ download(ps, "This browser cannot package the recordings."); return; }
+    shareFiles(files, why => download(ps, why));
   }
 
   /* ---- open / close ---- */

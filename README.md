@@ -108,13 +108,22 @@ Tap record to start, tap the same button again to stop, and it moves to the next
 sentence on its own. Any sentence can be re-recorded by tapping its button again.
 A counter reads "3 of 5 recorded".
 
-**Send these recordings** builds one file per clip named `p{page}_s{n}.m4a` (or `.webm`)
-plus a `timings.json`, and hands them to `navigator.share({files})` so iOS opens the
-share sheet. If the browser cannot share files it falls back to downloading each clip
-and says on screen why.
+**Send these recordings** packs everything into **one** zip named
+`{slug}_page{n}.zip` — a clip per sentence called `p{page}_s{n}.m4a` (or `.webm`) plus a
+`timings.json` — and hands that single file to `navigator.share({files})` so iOS opens
+the share sheet. If the browser cannot share files it downloads the same one zip and
+says on screen why.
 
 Notes for whoever maintains this:
 
+- **The zip is written by hand** (`makeZip`) because the page carries no libraries.
+  Entries are *stored*, not deflated: Opus and AAC are already compressed so deflate
+  would buy nothing, and storing keeps the whole build synchronous — which is what lets
+  `navigator.share()` stay inside the tap. Bytes come from the base64 already held for
+  localStorage, decoded with `atob`, so there is no `await` before sharing. Verified
+  against `unzip -t`, Python `zipfile.testzip()` and macOS `ditto`.
+- If zipping ever fails, it falls back to sharing the clips individually, and past that
+  to downloading them.
 - **Container** is feature-detected: `audio/mp4` on Safari, `audio/webm` elsewhere,
   via `MediaRecorder.isTypeSupported`. The extension follows (`.m4a` / `.webm`).
 - **Clip length** is wall-clock, measured with `Date.now()` across start and stop.
