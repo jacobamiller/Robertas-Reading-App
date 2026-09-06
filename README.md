@@ -100,6 +100,35 @@ Notes:
 - `words` and `quiz` are optional. Leave either empty and its tab hides itself.
 - `credit.html` and `quiz[].q` are inserted as HTML, so simple tags like `<b>` work.
 
+## Teacher recording page
+
+Open a book, tap the gear, then **Record this page**. The page is scoped to whichever
+story page is open: one row per sentence, each with a record button and a play button.
+Tap record to start, tap the same button again to stop, and it moves to the next
+sentence on its own. Any sentence can be re-recorded by tapping its button again.
+A counter reads "3 of 5 recorded".
+
+**Send these recordings** builds one file per clip named `p{page}_s{n}.m4a` (or `.webm`)
+plus a `timings.json`, and hands them to `navigator.share({files})` so iOS opens the
+share sheet. If the browser cannot share files it falls back to downloading each clip
+and says on screen why.
+
+Notes for whoever maintains this:
+
+- **Container** is feature-detected: `audio/mp4` on Safari, `audio/webm` elsewhere,
+  via `MediaRecorder.isTypeSupported`. The extension follows (`.m4a` / `.webm`).
+- **Clip length** is wall-clock, measured with `Date.now()` across start and stop.
+  Do not switch this to `audio.duration` — for MediaRecorder blobs it commonly reports
+  `Infinity` or `NaN` because the container has no duration in its header.
+- **Clips live in memory and in `localStorage`**, base64'd, under `rec:<slug>:<pageIndex>`,
+  so a reload does not lose them. localStorage caps out around 5 MB; when a write fails
+  the page says so and asks the teacher to send now. Sharing is the intended way out,
+  not storage.
+- `navigator.share` is called **inside the tap** with no `await` before it, or iOS
+  rejects it as not user-initiated.
+- Requires https or localhost for the microphone. The live Pages site qualifies.
+  iOS Safari has had MediaRecorder since 14.3 and file sharing since 15.
+
 ## Notes on behaviour
 
 - **Read-aloud** uses the device's built-in speech synthesis. Voice quality varies a

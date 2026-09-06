@@ -136,6 +136,48 @@ main{flex:1}
 .again{display:block;margin:0 auto;border:2px solid var(--line);border-radius:999px;padding:11px 22px;font-weight:700}
 audio{width:100%;margin-top:10px}
 .warn{font-size:13px;color:var(--crayon-red);text-align:center;padding:8px 0}
+
+/* ---------- teacher recording page ---------- */
+.tpage{position:absolute;left:11px;right:11px;top:11px;bottom:11px;border-radius:36px;
+  background:var(--paper);z-index:40;display:none;overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch}
+.tpage.open{display:block}
+@media (max-width:760px){ .tpage{left:0;right:0;top:0;bottom:0;border-radius:0} }
+.tin{padding:calc(16px + env(safe-area-inset-top)) 18px calc(26px + env(safe-area-inset-bottom));
+  max-width:520px;margin:0 auto}
+.tback{font-size:18px;font-weight:800;color:var(--faded);padding:10px 4px 10px 0;min-height:48px}
+.th{font-size:30px;font-weight:800;letter-spacing:-.01em;margin:4px 0 2px;line-height:1.1}
+.tsub{margin:0 0 14px;color:var(--faded);font-size:15px}
+.tsay{margin:0 0 16px;font-size:18px;line-height:1.45;background:#F0EAE0;border-radius:16px;padding:14px 16px}
+.tprog{margin:0 0 6px;font-size:22px;font-weight:800}
+.trow{display:flex;align-items:center;gap:13px;padding:18px 0;border-bottom:2px solid var(--line)}
+.trow.cur{background:#FFFBEB;border-radius:14px;padding:18px 12px;margin:0 -12px}
+.trow.live{background:#FCEDEB;border-radius:14px;padding:18px 12px;margin:0 -12px}
+.ttext{flex:1;min-width:0;font-size:21px;line-height:1.35}
+.tnum{font-weight:800;color:var(--faded)}
+.trow.tdone .ttext{color:var(--faded)}
+.tmeta{font-size:15px;font-weight:700;color:var(--faded);margin-top:6px}
+.trow.tdone .tmeta{color:var(--crayon-green)}
+.trow.live .tmeta{color:var(--crayon-red)}
+.tbtn{width:72px;height:72px;border-radius:50%;flex:none;font-size:30px;line-height:1;
+  border:4px solid var(--crayon-red);color:var(--crayon-red);background:var(--paper)}
+.tbtn:active{transform:scale(.94)}
+.tbtn.live{background:var(--crayon-red);color:#fff;animation:pulse 1.1s ease-in-out infinite}
+.tplay{width:62px;height:62px;border-radius:50%;flex:none;font-size:24px;line-height:1;
+  border:4px solid var(--line);color:var(--ink);background:var(--paper)}
+.tplay:active{transform:scale(.94)}
+.tplay:disabled{opacity:.28}
+.tstatus{margin:16px 0 0;font-size:17px;line-height:1.45;font-weight:700;text-align:left;color:var(--crayon-green);display:none}
+.tstatus.show{display:block}
+.tstatus.tbad{color:var(--crayon-red)}
+.tsend{width:100%;background:var(--crayon-green);color:#fff;font-weight:800;font-size:23px;
+  padding:22px;border-radius:18px;box-shadow:0 6px 0 #3d7a30;margin-top:22px}
+.tsend:active{transform:translateY(3px);box-shadow:0 3px 0 #3d7a30}
+.tsend:disabled{background:var(--faded);box-shadow:0 6px 0 #8d8780}
+.tsend:disabled:active{transform:none;box-shadow:0 6px 0 #8d8780}
+.tnote{margin:14px 0 0;font-size:14px;color:var(--faded);line-height:1.5;text-align:center}
+.sheetbig{width:100%;border:3px solid var(--crayon-red);color:var(--crayon-red);
+  border-radius:14px;padding:16px;font-size:18px;font-weight:800}
 </style>
 </head>
 <body>
@@ -213,7 +255,23 @@ audio{width:100%;margin-top:10px}
       <button class="chip" id="tryvoice">Hear it</button>
     </div>
     <audio id="playback" controls style="display:none"></audio>
+    <h3>For the teacher</h3>
+    <button class="sheetbig" id="teachbtn">&#127908; Record this page</button>
     <button class="done" id="done">Done</button>
+  </div>
+</div>
+
+<div class="tpage" id="tpage">
+  <div class="tin">
+    <button class="tback" id="tback">&lsaquo; Back to the book</button>
+    <h2 class="th">Record this page</h2>
+    <p class="tsub" id="ttitle"></p>
+    <p class="tsay">Read one sentence out loud. Tap the round red button to start, then tap the same button again to stop.</p>
+    <p class="tprog" id="tprog"></p>
+    <div id="trows"></div>
+    <p class="tstatus" id="tstatus"></p>
+    <button class="tsend" id="tsend">Send these recordings</button>
+    <p class="tnote">The recordings stay on this phone until you send them.</p>
   </div>
 </div>
 </div><!--device-->
@@ -667,6 +725,318 @@ async function loadBook(){
   $("startBtn").textContent="Start reading";
   prefetch(0);
 }
+
+/* ---------- teacher recording page ----------------------------------------
+   Scoped to whichever story page is open. Clips live in memory and, base64'd,
+   in localStorage so a reload does not lose them. Sharing is the way out;
+   downloading each clip is the fallback. Lengths are measured with Date.now(),
+   never read off audio.duration, which lies for MediaRecorder blobs.        */
+(function(){
+  let items = {};        // sentence index -> {blob, b64, ms, at}
+  let rows  = [];        // per-sentence DOM refs
+  let pageOf = -1, cur = 0;
+  let trec = null, tstream = null, tidx = -1, tstart = 0, tchunks = [], tick = null;
+  let audio = null, playing = -1;
+  let storeWarn = "";
+
+  /* ---- container format: audio/mp4 on Safari, audio/webm elsewhere ---- */
+  const isSafari = /^((?!chrome|android|crios|fxios|edgios|edg\/).)*safari/i.test(navigator.userAgent);
+  function pickMime(){
+    if(typeof MediaRecorder === "undefined") return null;
+    const can = m => { try{ return !MediaRecorder.isTypeSupported || MediaRecorder.isTypeSupported(m); }
+                       catch(e){ return false; } };
+    for(const m of (isSafari ? ["audio/mp4","audio/webm"] : ["audio/webm","audio/mp4"]))
+      if(can(m)) return m;
+    return "";           // recorder exists but likes neither: let it choose
+  }
+  const MIME = pickMime();
+  const EXT  = (MIME && MIME.indexOf("mp4") >= 0) ? "m4a" : "webm";
+
+  /* ---- helpers ---- */
+  const secs = ms => { const n = Math.max(1, Math.round(ms/1000));
+                       return n + (n === 1 ? " second" : " seconds"); };
+  function b64FromBlob(blob){
+    return new Promise((res, rej) => {
+      const fr = new FileReader();
+      fr.onload = () => { const t = String(fr.result), i = t.indexOf(","); res(i < 0 ? "" : t.slice(i+1)); };
+      fr.onerror = () => rej(fr.error || new Error("could not read the clip"));
+      fr.readAsDataURL(blob);
+    });
+  }
+  function blobFromB64(b64, mime){
+    const bin = atob(b64), u = new Uint8Array(bin.length);
+    for(let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+    return new Blob([u], {type: mime || "application/octet-stream"});
+  }
+  const storeKey = () => "rec:" + slug + ":" + pageOf;
+
+  function persist(){
+    const out = {v:1, slug: slug, page: pageOf, mime: MIME, ext: EXT, items: {}};
+    Object.keys(items).forEach(k => {
+      if(items[k].b64) out.items[k] = {b64: items[k].b64, ms: items[k].ms, at: items[k].at};
+    });
+    try{
+      localStorage.setItem(storeKey(), JSON.stringify(out));
+      storeWarn = "";
+    }catch(e){
+      // usually the 5 MB localStorage ceiling
+      storeWarn = "There is no room to keep these on the phone. They are safe on this screen, "
+                + "but please send them before you leave it.";
+    }
+  }
+  function restore(){
+    items = {};
+    let raw = null;
+    try{ raw = localStorage.getItem(storeKey()); }catch(e){ return; }
+    if(!raw) return;
+    try{
+      const d = JSON.parse(raw);
+      if(d.slug !== slug || d.page !== pageOf) return;
+      const n = PAGES[pageOf].s.length;
+      Object.keys(d.items || {}).forEach(k => {
+        const it = d.items[k];
+        if(!it || !it.b64 || +k < 0 || +k >= n) return;
+        items[k] = {blob: blobFromB64(it.b64, d.mime || MIME), b64: it.b64,
+                    ms: it.ms || 0, at: it.at || 0};
+      });
+    }catch(e){ /* corrupt entry: start clean rather than crash */ }
+  }
+
+  function say(msg, warn){
+    const el = $("tstatus");
+    el.textContent = msg || "";
+    el.classList.toggle("show", !!msg);
+    el.classList.toggle("tbad", !!warn);
+  }
+
+  /* ---- playback ---- */
+  function stopPlay(){
+    if(audio){
+      try{ audio.pause(); }catch(e){}
+      if(audio.src) URL.revokeObjectURL(audio.src);
+      audio = null;
+    }
+    playing = -1;
+  }
+  function play(i){
+    const it = items[i];
+    if(!it) return;
+    if(playing === i){ stopPlay(); refresh(); return; }
+    stopPlay();
+    audio = new Audio(URL.createObjectURL(it.blob));
+    playing = i;
+    audio.onended = () => { stopPlay(); refresh(); };
+    audio.onerror = () => { stopPlay(); refresh();
+      say("That clip will not play back on this phone, but it will still send.", true); };
+    const pr = audio.play();
+    if(pr && pr.catch) pr.catch(() => { stopPlay(); refresh(); say("Tap the play button again.", true); });
+    refresh();
+  }
+
+  /* ---- recording ---- */
+  function dropStream(){
+    if(tstream){ try{ tstream.getTracks().forEach(t => t.stop()); }catch(e){} tstream = null; }
+  }
+  function startTick(){ stopTick(); tick = setInterval(refresh, 250); }
+  function stopTick(){ if(tick){ clearInterval(tick); tick = null; } }
+  const recording = () => !!(trec && trec.state === "recording");
+
+  function stopRec(){ if(recording()){ try{ trec.stop(); }catch(e){} } }
+
+  async function startRec(i){
+    if(recording()){ stopRec(); return; }
+    if(typeof MediaRecorder === "undefined"){
+      say("This phone cannot record sound in this browser. Please try Safari or Chrome.", true); return;
+    }
+    stopPlay(); refresh();
+    say("");
+    try{
+      tstream = await navigator.mediaDevices.getUserMedia({audio:true});
+    }catch(e){
+      dropStream();
+      say("I could not switch the microphone on. Tap the red button again and choose Allow.", true);
+      return;
+    }
+    tchunks = [];
+    try{
+      trec = MIME ? new MediaRecorder(tstream, {mimeType: MIME}) : new MediaRecorder(tstream);
+    }catch(e){
+      try{ trec = new MediaRecorder(tstream); }
+      catch(e2){ dropStream(); say("This phone cannot record sound here.", true); return; }
+    }
+    tidx = i;
+    trec.ondataavailable = e => { if(e.data && e.data.size) tchunks.push(e.data); };
+    trec.onstop = () => {
+      const ms   = Date.now() - tstart;             // measured, not audio.duration
+      const type = (trec && trec.mimeType) || MIME || "audio/webm";
+      const blob = new Blob(tchunks, {type: type});
+      const idx  = tidx;
+      dropStream(); stopTick();
+      tidx = -1; trec = null; tchunks = [];
+      if(!blob.size || ms < 400){
+        say("That was too short to keep. Tap the red button and read the sentence again.", true);
+        refresh();
+        return;
+      }
+      items[idx] = {blob: blob, b64: "", ms: ms, at: Date.now()};
+      refresh();
+      cur = Math.min(idx + 1, PAGES[pageOf].s.length - 1);   // auto-advance
+      b64FromBlob(blob).then(b => { items[idx].b64 = b; persist(); refresh(); })
+                       .catch(() => { persist(); refresh(); });
+      refresh();
+      const nx = rows[cur];
+      if(nx && cur !== idx) nx.row.scrollIntoView({behavior:"smooth", block:"center"});
+    };
+    tstart = Date.now();
+    try{ trec.start(); }
+    catch(e){ dropStream(); trec = null; tidx = -1; say("Recording would not start. Please try again.", true); return; }
+    startTick(); refresh();
+  }
+
+  /* ---- render ---- */
+  function build(){
+    const box = $("trows");
+    box.innerHTML = "";
+    rows = [];
+    PAGES[pageOf].s.forEach((sent, i) => {
+      const row = document.createElement("div"); row.className = "trow";
+      const txt = document.createElement("div"); txt.className = "ttext";
+      const num = document.createElement("span"); num.className = "tnum"; num.textContent = (i+1) + ". ";
+      txt.appendChild(num);
+      txt.appendChild(document.createTextNode(sent));
+      const meta = document.createElement("div"); meta.className = "tmeta";
+      txt.appendChild(meta);
+      const rb = document.createElement("button"); rb.className = "tbtn"; rb.type = "button";
+      rb.onclick = () => { if(recording()) stopRec(); else startRec(i); };
+      const pb = document.createElement("button"); pb.className = "tplay"; pb.type = "button";
+      pb.onclick = () => play(i);
+      row.appendChild(txt); row.appendChild(rb); row.appendChild(pb);
+      box.appendChild(row);
+      rows.push({row: row, rb: rb, pb: pb, meta: meta});
+    });
+  }
+  function refresh(){
+    if(pageOf < 0 || !rows.length) return;
+    const n = PAGES[pageOf].s.length;
+    let done = 0;
+    rows.forEach((r, i) => {
+      const it = items[i], live = recording() && tidx === i;
+      if(it) done++;
+      r.row.classList.toggle("live", live);
+      r.row.classList.toggle("cur",  i === cur && !live);
+      r.row.classList.toggle("tdone", !!it && !live);
+      r.rb.innerHTML   = live ? "&#9632;" : "&#9679;";
+      r.rb.setAttribute("aria-label", (live ? "Stop recording sentence " : "Record sentence ") + (i+1));
+      r.pb.innerHTML   = playing === i ? "&#9632;" : "&#9654;";
+      r.pb.disabled    = !it || live;
+      r.pb.setAttribute("aria-label", "Play sentence " + (i+1));
+      r.meta.textContent = live ? "Recording " + secs(Date.now() - tstart) + " — tap the square to stop"
+                         : it   ? "Recorded " + secs(it.ms) + (it.b64 ? "" : " — saving…")
+                                : "Not recorded yet";
+    });
+    $("tprog").textContent = done + " of " + n + " recorded";
+    const btn = $("tsend");
+    btn.disabled    = !done || recording();
+    btn.textContent = done ? "Send these recordings" : "Record a sentence first";
+    if(storeWarn && !$("tstatus").classList.contains("tbad")) say(storeWarn, true);
+  }
+
+  /* ---- sending ---- */
+  function parts(){
+    const n = PAGES[pageOf].s.length, out = [];
+    const timings = {
+      book: slug,
+      title: (BOOK && BOOK.title) || slug,
+      page: pageOf + 1,
+      pagesInBook: PAGES.length,
+      container: MIME || "browser default",
+      note: "ms is wall-clock time measured while recording, not decoded audio duration",
+      sentences: []
+    };
+    for(let i = 0; i < n; i++){
+      const it = items[i];
+      if(!it) continue;
+      const name = "p" + (pageOf+1) + "_s" + (i+1) + "." + EXT;
+      out.push({name: name, blob: it.blob});
+      timings.sentences.push({
+        file: name, sentence: i + 1, text: PAGES[pageOf].s[i],
+        ms: it.ms, seconds: +(it.ms/1000).toFixed(2),
+        recordedAt: new Date(it.at).toISOString()
+      });
+    }
+    out.push({name: "timings.json",
+              blob: new Blob([JSON.stringify(timings, null, 1)], {type: "application/json"})});
+    return out;
+  }
+  function download(ps, why){
+    say(why + " Saving each recording to this phone instead — look in your Files or Downloads.", true);
+    ps.forEach((p, k) => setTimeout(() => {
+      const u = URL.createObjectURL(p.blob);
+      const a = document.createElement("a");
+      a.href = u; a.download = p.name; a.rel = "noopener";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(u), 30000);
+    }, k * 600));
+  }
+  function send(){
+    const ps = parts();
+    if(ps.length < 2){ say("Record at least one sentence first.", true); return; }
+
+    if(typeof File !== "function"){
+      download(ps, "This browser cannot build files to share."); return;
+    }
+    let files;
+    try{
+      files = ps.map(p => new File([p.blob], p.name, {type: p.blob.type || "application/octet-stream"}));
+    }catch(e){
+      download(ps, "This browser cannot build files to share."); return;
+    }
+
+    let why = "";
+    if(!navigator.share)                       why = "This browser cannot open the share sheet.";
+    else if(!navigator.canShare)               why = "This browser cannot check whether it can share files.";
+    else if(!navigator.canShare({files: files})) why = "This browser will not share sound files.";
+    if(why){ download(ps, why); return; }
+
+    // stays inside the tap, so iOS treats it as a user gesture
+    navigator.share({files: files}).then(() => {
+      say("Sent. Thank you!");
+    }).catch(err => {
+      const name = (err && err.name) || "";
+      if(name === "AbortError"){ say(""); return; }     // teacher closed the sheet
+      download(ps, "The share sheet did not open (" + (name || "unknown error") + ").");
+    });
+  }
+
+  /* ---- open / close ---- */
+  function open(){
+    if(!PAGES.length) return;
+    stopAll();
+    if(typeof mr !== "undefined" && mr && mr.state === "recording"){ try{ mr.stop(); }catch(e){} }
+    openSheet(false);
+    pageOf = page;
+    cur = 0;
+    storeWarn = "";
+    restore();
+    build();
+    say("");
+    $("ttitle").textContent = "Page " + (pageOf + 1) + " of " + PAGES.length
+                            + " · " + PAGES[pageOf].s.length + " sentences";
+    $("tpage").classList.add("open");
+    $("tpage").scrollTop = 0;
+    refresh();
+  }
+  function close(){
+    stopRec(); stopPlay(); stopTick();
+    $("tpage").classList.remove("open");
+    refresh();
+  }
+
+  $("teachbtn").onclick = open;
+  $("tback").onclick    = close;
+  $("tsend").onclick    = send;
+})();
+
 loadBook();
 </script>
 </body>
