@@ -1,0 +1,185 @@
+{
+ "slug": "rabbit-makes-friends-with-fire",
+ "title": "Rabbit Makes Friends With Fire",
+ "subtitle": "Reading Practice",
+ "tagline": "A tale from the Nyungwe people of Mozambique.",
+ "credit": {
+  "html": "Written by Basilio Gimo · A traditional tale from the Nyungwe people of Mozambique<br>Images by Carol Liddiment, © 2014 Little Zebra Books · <a href=\"http://creativecommons.org/licenses/by-sa/4.0/\">CC BY-SA 4.0</a><br>Original text © 2015 SIL Moçambique"
+ },
+ "voiceSample": "One day, Rabbit was walking by the riverside.",
+ "cover": "cover.webp",
+ "images": {
+  "cover": "cover.webp",
+  "1": "1.webp",
+  "2": "2.webp",
+  "3": "3.webp",
+  "4": "4.webp",
+  "5": "5.webp",
+  "6": "6.webp",
+  "7": "7.webp",
+  "8": "8.webp",
+  "9": "9.webp"
+ },
+ "pages": [
+  {
+   "img": "1",
+   "s": [
+    "One day, Rabbit was walking by the riverside."
+   ]
+  },
+  {
+   "img": "2",
+   "s": [
+    "Hippo was there too, going for a stroll and eating some nice green grass."
+   ]
+  },
+  {
+   "img": "3",
+   "s": [
+    "Hippo didn't see that Rabbit was there and so she accidentally stepped on Rabbit's foot."
+   ]
+  },
+  {
+   "img": "4",
+   "s": [
+    "Rabbit yelled and started screaming at Hippo.",
+    "\"You Hippo! Can't you see that you're stepping on my foot?\"",
+    "Hippo apologized to Rabbit.",
+    "\"I'm so sorry, my friend. I didn't see you.\"",
+    "\"Please forgive me!\""
+   ]
+  },
+  {
+   "img": "5",
+   "s": [
+    "But Rabbit wouldn't listen and he shouted at Hippo.",
+    "\"You did that on purpose!\"",
+    "\"Someday, you'll see! You're going to pay!\""
+   ]
+  },
+  {
+   "img": "6",
+   "s": [
+    "Then Rabbit went to find Fire and said, \"Go, burn Hippo when she comes out of the water to eat grass.\"",
+    "Then Fire answered, \"No problem, Rabbit, my friend.\"",
+    "\"I'll do just what you asked.\""
+   ]
+  },
+  {
+   "img": "7",
+   "s": [
+    "Later Hippo was eating grass far from the river when whoosh!",
+    "Fire burst into flame and began to burn up all of Hippo's hair."
+   ]
+  },
+  {
+   "img": "8",
+   "s": [
+    "Hippo started to cry and ran for the water.",
+    "All her hair was burned up in the fire.",
+    "Hippo kept crying.",
+    "\"My hair has burned up in the fire!\"",
+    "\"You burned up all my hair!\"",
+    "\"My hair is all gone!\"",
+    "\"My beautiful, beautiful hair!\""
+   ]
+  },
+  {
+   "img": "9",
+   "s": [
+    "That's why the hippo never goes far from the water for fear of getting burned by Fire.",
+    "Rabbit was overjoyed when he heard that Fire had burned Hippo.",
+    "\"I got her back!\""
+   ]
+  }
+ ],
+ "words": [
+  {
+   "w": "hippo",
+   "en": "a very big animal that lives in rivers",
+   "zh": "河马"
+  },
+  {
+   "w": "riverside",
+   "en": "the land next to a river",
+   "zh": "河边"
+  },
+  {
+   "w": "stroll",
+   "en": "a slow, easy walk",
+   "zh": "散步"
+  },
+  {
+   "w": "accident",
+   "en": "something that happens without meaning to",
+   "zh": "意外"
+  },
+  {
+   "w": "apologize",
+   "en": "to say you are sorry",
+   "zh": "道歉"
+  },
+  {
+   "w": "forgive",
+   "en": "to stop being angry with someone",
+   "zh": "原谅"
+  },
+  {
+   "w": "flame",
+   "en": "the bright part of a fire",
+   "zh": "火焰"
+  },
+  {
+   "w": "overjoyed",
+   "en": "very, very happy",
+   "zh": "非常高兴"
+  }
+ ],
+ "quiz": [
+  {
+   "q": "Who stepped on Rabbit's foot?",
+   "o": [
+    "Chameleon",
+    "Hippo",
+    "Fire"
+   ],
+   "a": 1
+  },
+  {
+   "q": "Did Hippo mean to do it?",
+   "o": [
+    "No, it was an accident",
+    "Yes, on purpose",
+    "She was asleep"
+   ],
+   "a": 0
+  },
+  {
+   "q": "What does <b>apologize</b> mean?",
+   "o": [
+    "道歉",
+    "原谅",
+    "散步"
+   ],
+   "a": 0
+  },
+  {
+   "q": "What did Rabbit ask Fire to do?",
+   "o": [
+    "Burn the grass",
+    "Burn Hippo",
+    "Warm the river"
+   ],
+   "a": 1
+  },
+  {
+   "q": "Why does Hippo stay near the water?",
+   "o": [
+    "She likes swimming",
+    "She is afraid of Fire",
+    "She lost her friend"
+   ],
+   "a": 1
+  }
+ ]
+}

@@ -410,7 +410,9 @@ function say(text){
 
 /* ---------- listening and scoring ---------- */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-const norm = w => w.toLowerCase().replace(/[^a-z']/g,"");
+const norm = w => w.toLowerCase()
+  .replace(/[\u2018\u2019\u02BC\u00B4]/g,"'")   // curly apostrophes -> plain, so "won't" scores
+  .replace(/[^a-z']/g,"");
 function matchWords(said, expected){
   const n=said.length,m=expected.length,d=Array.from({length:n+1},()=>new Array(m+1).fill(0));
   for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)

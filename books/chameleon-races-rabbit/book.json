@@ -1,0 +1,192 @@
+{
+ "slug": "chameleon-races-rabbit",
+ "title": "Chameleon Races Rabbit",
+ "subtitle": "Reading Practice",
+ "tagline": "A folktale from the Lomwe people of Mozambique.",
+ "credit": {
+  "html": "A traditional folktale from the Lomwe people of Mozambique<br>Images by Gavin Thomson, © 2016 Little Zebra Books · <a href=\"http://creativecommons.org/licenses/by-sa/4.0/\">CC BY-SA 4.0</a><br>Original text © 2016 SIM"
+ },
+ "voiceSample": "Chameleon challenged Rabbit to a race.",
+ "cover": "cover.webp",
+ "images": {
+  "cover": "cover.webp",
+  "1": "1.webp",
+  "2": "2.webp",
+  "3": "3.webp",
+  "4": "4.webp",
+  "5": "5.webp",
+  "6": "6.webp",
+  "7": "7.webp",
+  "8": "8.webp",
+  "9": "9.webp",
+  "10": "10.webp",
+  "11": "11.webp"
+ },
+ "pages": [
+  {
+   "img": "1",
+   "s": [
+    "One day, Chameleon challenged Rabbit to a race to see who was faster."
+   ]
+  },
+  {
+   "img": "2",
+   "s": [
+    "Rabbit accepted, saying, \"You are so slow!\"",
+    "\"You start with one foot, then stop and start with the other.\"",
+    "\"You will never even arrive.\"",
+    "\"I will leave you far, far behind.\"",
+    "\"You won't even see me!\""
+   ]
+  },
+  {
+   "img": "3",
+   "s": [
+    "So, they invited all the animals to come and watch."
+   ]
+  },
+  {
+   "img": "4",
+   "s": [
+    "Chameleon and Rabbit lined up and waited for the signal."
+   ]
+  },
+  {
+   "img": "5",
+   "s": [
+    "When the race began, Chameleon jumped onto Rabbit's tail."
+   ]
+  },
+  {
+   "img": "6",
+   "s": [
+    "As Rabbit ran off, the animals laughed and clapped their hands.",
+    "They were laughing like crazy because Chameleon was on Rabbit's tail."
+   ]
+  },
+  {
+   "img": "7",
+   "s": [
+    "Hearing the noise, Rabbit skidded to a stop.",
+    "Chameleon jumped off and said, \"Hey! Watch where you're going!\"",
+    "\"It's about time you got here.\""
+   ]
+  },
+  {
+   "img": "8",
+   "s": [
+    "Rabbit was amazed and started running again."
+   ]
+  },
+  {
+   "img": "9",
+   "s": [
+    "As they approached the finish line, the animals clapped their hands, shouting to see Chameleon still on Rabbit's tail.",
+    "Rabbit heard them and thought Chameleon must have already won."
+   ]
+  },
+  {
+   "img": "10",
+   "s": [
+    "When they arrived at the finish line, Chameleon jumped off and said, \"Don't step on me!\"",
+    "\"I got here first!\""
+   ]
+  },
+  {
+   "img": "11",
+   "s": [
+    "Rabbit stormed off in a temper.",
+    "Chameleon stayed to receive the prize, and Rabbit lost."
+   ]
+  }
+ ],
+ "words": [
+  {
+   "w": "chameleon",
+   "en": "a lizard that can change its colour",
+   "zh": "变色龙"
+  },
+  {
+   "w": "race",
+   "en": "a contest to see who is fastest",
+   "zh": "赛跑"
+  },
+  {
+   "w": "tail",
+   "en": "the long part at the back of an animal",
+   "zh": "尾巴"
+  },
+  {
+   "w": "signal",
+   "en": "a sign that tells you to start",
+   "zh": "信号"
+  },
+  {
+   "w": "amazed",
+   "en": "very surprised",
+   "zh": "惊讶的"
+  },
+  {
+   "w": "prize",
+   "en": "something you win",
+   "zh": "奖品"
+  },
+  {
+   "w": "temper",
+   "en": "a sudden feeling of anger",
+   "zh": "脾气"
+  },
+  {
+   "w": "slow",
+   "en": "not fast",
+   "zh": "慢的"
+  }
+ ],
+ "quiz": [
+  {
+   "q": "Who challenged Rabbit to a race?",
+   "o": [
+    "Hippo",
+    "Chameleon",
+    "Fire"
+   ],
+   "a": 1
+  },
+  {
+   "q": "Where did Chameleon ride during the race?",
+   "o": [
+    "Under a rock",
+    "In a tree",
+    "On Rabbit's tail"
+   ],
+   "a": 2
+  },
+  {
+   "q": "What does <b>tail</b> mean?",
+   "o": [
+    "尾巴",
+    "奖品",
+    "信号"
+   ],
+   "a": 0
+  },
+  {
+   "q": "Who won the race?",
+   "o": [
+    "Rabbit",
+    "Chameleon",
+    "Nobody"
+   ],
+   "a": 1
+  },
+  {
+   "q": "How did Rabbit feel at the end?",
+   "o": [
+    "Angry",
+    "Happy",
+    "Sleepy"
+   ],
+   "a": 0
+  }
+ ]
+}

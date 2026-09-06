@@ -5,6 +5,20 @@ an echo mode, and a scored practice mode using speech recognition.
 
 **Live:** https://jacobamiller.github.io/Robertas-Reading-App/
 
+## Books
+
+| Book | Pages | Source and licence |
+|---|---|---|
+| Linda's Surprise | 11 | © 2026 Martha Matzke, illustrated by Grade 1 students, Solomon Islands · [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/) |
+| Big Blue Bus | 15 | Mecelin Kakoro, illustrated by Mango Tree · © 2015 African Storybook Initiative · [CC BY-SA 4.0](http://creativecommons.org/licenses/by-sa/4.0/) |
+| Chameleon Races Rabbit | 11 | Lomwe folktale, Mozambique · images Gavin Thomson © 2016 Little Zebra Books · text © 2016 SIM · [CC BY-SA 4.0](http://creativecommons.org/licenses/by-sa/4.0/) |
+| Rabbit Makes Friends With Fire | 9 | Basilio Gimo, Nyungwe tale, Mozambique · images Carol Liddiment © 2014 Little Zebra Books · text © 2015 SIL Moçambique · [CC BY-SA 4.0](http://creativecommons.org/licenses/by-sa/4.0/) |
+
+Three of the four are **CC BY-SA 4.0**, which is a *share-alike* licence: you may use and
+adapt them commercially, but anything you distribute that builds on them must carry the
+same licence, and the original credits must stay intact. Each book's credits are shown on
+its cover screen, drawn from `credit.html` in its `book.json` — don't remove them.
+
 ## Layout
 
 ```
@@ -24,8 +38,26 @@ and renders whatever it finds there.
 ## Adding a book
 
 1. **Make the folder** — `books/my-book/`, using a slug of letters, digits and hyphens.
-2. **Add the images** — `cover.webp` plus one image per page. WebP keeps them small;
-   convert with `cwebp page1.png -q 82 -o 1.webp`.
+2. **Add the images** — use the helper, which does all of the below for you:
+
+   ```sh
+   python3 tools/pdf2images.py "input/My Book.pdf" --list        # find the story pages
+   python3 tools/pdf2images.py "input/My Book.pdf" my-book --first 5 --last 19
+   ```
+
+   By hand it is `cover.webp` plus one image per page.
+   From a PDF, the cover is the whole of page 1 but the story art is the *embedded*
+   illustration, so the page text is not baked into the picture:
+
+   ```sh
+   pdftoppm  -f 1 -l 1 -r 150 -png book.pdf cover   # cover: whole page
+   pdfimages -f 5 -l 5 -png book.pdf p5             # story: illustration only
+   ```
+
+   Then resize to 900px on the long edge and save as WebP at quality 78 — that is
+   plenty for a phone and keeps pages near 70 KB. If `pdfimages` emits a second file,
+   it is a soft mask; composite it onto white or transparent areas may go black.
+   Needs `brew install poppler webp`.
 3. **Write `book.json`** — see the shape below.
 4. **List it** — add the slug to `books.json`.
 5. **Test locally** — `python3 -m http.server 8000`, then open `localhost:8000`.

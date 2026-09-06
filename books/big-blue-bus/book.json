@@ -1,0 +1,240 @@
+{
+ "slug": "big-blue-bus",
+ "title": "Big Blue Bus",
+ "subtitle": "Reading Practice",
+ "tagline": "Read along, listen, and practise out loud.",
+ "credit": {
+  "html": "Author: Mecelin Kakoro · Illustrated by Mango Tree<br>Images © 2015 African Storybook Initiative · <a href=\"http://creativecommons.org/licenses/by-sa/4.0/\">CC BY-SA 4.0</a><br>Original text © 2015 African Storybook Initiative"
+ },
+ "voiceSample": "Ebei was very excited.",
+ "cover": "cover.webp",
+ "images": {
+  "cover": "cover.webp",
+  "1": "1.webp",
+  "2": "2.webp",
+  "3": "3.webp",
+  "4": "4.webp",
+  "5": "5.webp",
+  "6": "6.webp",
+  "7": "7.webp",
+  "8": "8.webp",
+  "9": "9.webp",
+  "10": "10.webp",
+  "11": "11.webp",
+  "12": "12.webp",
+  "13": "13.webp",
+  "14": "14.webp",
+  "15": "15.webp"
+ },
+ "pages": [
+  {
+   "img": "1",
+   "s": [
+    "There was only one bus in Ebei's village.",
+    "It was big and blue.",
+    "It was very noisy."
+   ]
+  },
+  {
+   "img": "2",
+   "s": [
+    "\"Tomorrow we will go to town,\" said Ebei's mother.",
+    "\"We will buy your school uniform.\""
+   ]
+  },
+  {
+   "img": "3",
+   "s": [
+    "Ebei was very excited.",
+    "They would travel in the big blue bus.",
+    "He could not sleep that night."
+   ]
+  },
+  {
+   "img": "4",
+   "s": [
+    "When his mother came to wake him, Ebei was already dressed."
+   ]
+  },
+  {
+   "img": "5",
+   "s": [
+    "Ebei and his mother walked to the bus stop.",
+    "They waited for the big blue bus.",
+    "But the bus did not come."
+   ]
+  },
+  {
+   "img": "6",
+   "s": [
+    "Other people arrived at the bus stop.",
+    "They complained because the bus was late.",
+    "\"Where is the bus?\" they asked."
+   ]
+  },
+  {
+   "img": "7",
+   "s": [
+    "Ebei was worried.",
+    "\"We will not be able to go to town,\" he thought.",
+    "\"I will not be able to get my uniform.\""
+   ]
+  },
+  {
+   "img": "8",
+   "s": [
+    "Some people gave up and went home.",
+    "Ebei cried.",
+    "He did not want to go.",
+    "\"We will wait a bit longer,\" said his mother."
+   ]
+  },
+  {
+   "img": "9",
+   "s": [
+    "Suddenly, they heard a noise.",
+    "They saw dust in the air.",
+    "The bus was coming!"
+   ]
+  },
+  {
+   "img": "10",
+   "s": [
+    "But this bus was not blue.",
+    "It was not big.",
+    "It was red and small.",
+    "The people did not want to get in this bus."
+   ]
+  },
+  {
+   "img": "11",
+   "s": [
+    "\"Get in! Get in!\" shouted the driver.",
+    "\"We are very late today,\" he called.",
+    "Ebei and his mother got in first.",
+    "Soon everyone else got in the small red bus."
+   ]
+  },
+  {
+   "img": "12",
+   "s": [
+    "Ebei looked out the window.",
+    "He saw more people at the bus stop."
+   ]
+  },
+  {
+   "img": "13",
+   "s": [
+    "Even more people were running to catch the bus.",
+    "But they were too late.",
+    "The red bus was full.",
+    "It left for town."
+   ]
+  },
+  {
+   "img": "14",
+   "s": [
+    "\"Where is the big blue bus?\" asked Ebei's mother.",
+    "\"It broke down,\" replied the driver.",
+    "\"We are fixing it. It will come tomorrow.\""
+   ]
+  },
+  {
+   "img": "15",
+   "s": [
+    "Ebei did not care about the colour of the bus.",
+    "He did not care about the size.",
+    "This bus was going to town!"
+   ]
+  }
+ ],
+ "words": [
+  {
+   "w": "bus",
+   "en": "a big vehicle that carries many people",
+   "zh": "公共汽车"
+  },
+  {
+   "w": "village",
+   "en": "a small group of houses in the country",
+   "zh": "村庄"
+  },
+  {
+   "w": "uniform",
+   "en": "special clothes you wear for school",
+   "zh": "校服"
+  },
+  {
+   "w": "excited",
+   "en": "very happy about something coming soon",
+   "zh": "兴奋的"
+  },
+  {
+   "w": "worried",
+   "en": "afraid something bad will happen",
+   "zh": "担心的"
+  },
+  {
+   "w": "complain",
+   "en": "to say you are not happy about something",
+   "zh": "抱怨"
+  },
+  {
+   "w": "dust",
+   "en": "dry dirt that floats in the air",
+   "zh": "灰尘"
+  },
+  {
+   "w": "driver",
+   "en": "the person who drives a bus or car",
+   "zh": "司机"
+  }
+ ],
+ "quiz": [
+  {
+   "q": "What colour was the big bus?",
+   "o": [
+    "Red",
+    "Blue",
+    "Green"
+   ],
+   "a": 1
+  },
+  {
+   "q": "Why were Ebei and his mother going to town?",
+   "o": [
+    "To visit the driver",
+    "To find a chicken",
+    "To buy a school uniform"
+   ],
+   "a": 2
+  },
+  {
+   "q": "What does <b>uniform</b> mean?",
+   "o": [
+    "灰尘",
+    "校服",
+    "村庄"
+   ],
+   "a": 1
+  },
+  {
+   "q": "Which bus finally arrived?",
+   "o": [
+    "The big blue bus",
+    "A small red bus",
+    "No bus at all"
+   ],
+   "a": 1
+  },
+  {
+   "q": "What had happened to the big blue bus?",
+   "o": [
+    "It was full",
+    "It went to another village",
+    "It broke down"
+   ],
+   "a": 2
+  }
+ ]
+}
