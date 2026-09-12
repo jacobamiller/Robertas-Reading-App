@@ -112,23 +112,107 @@ function toCSV(rows){
   return cols.join(",")+"\n"+rows.map(r=>cols.map(c=>q(r[c])).join(",")).join("\n");
 }
 
-let SESSIONS=[], EVENTS=[];
+/* Everyone, pulled back off ntfy. Each child's newest message holds their
+   running totals, so the latest one per child is the whole picture. Messages
+   expire after about half a day, but a child who has opened the app since
+   then has already replaced theirs. */
+async function fromNtfy(){
+  const t = Track.topic();
+  if(!t) return null;
+  const r = await fetch(Track.ntfy + encodeURIComponent(t) + "/json?poll=1");
+  if(!r.ok) throw new Error("ntfy said " + r.status);
+  const txt = (await r.text()).trim();
+  if(!txt) return [];
+  const latest = {};
+  txt.split("\n").forEach(line=>{
+    let m; try{ m = JSON.parse(line); }catch(e){ return; }
+    const body = m.message || "";
+    const j = body.split("\n").find(l=>l.indexOf("json ") === 0);
+    if(!j) return;
+    let t2; try{ t2 = JSON.parse(j.slice(5)); }catch(e){ return; }
+    if(!latest[t2.student] || (m.time||0) > latest[t2.student]._at)
+      { t2._at = m.time||0; latest[t2.student] = t2; }
+  });
+  return Object.values(latest);
+}
+
+function renderEveryone(rows){
+  if(!rows.length) return '<p class="sub">Nothing has arrived yet.</p>';
+  rows.sort((a,b)=>b.minutes-a.minutes);
+  let h='<table><tr><th>Reader</th><th class="n">Minutes</th><th class="n">Days</th>'
+   +'<th class="n">Pages</th><th class="n">Accuracy</th><th class="n">Quiz</th>'
+   +'<th class="n">Re-reads</th><th>Last seen</th></tr>';
+  rows.forEach(t=>{
+    const acc = t.practiceAll ? Math.round(t.practiceGot/t.practiceAll*100)+"%" : "—";
+    h+='<tr><td><b>'+esc(t.name)+'</b></td><td class="n">'+t.minutes+'</td>'
+      +'<td class="n">'+t.days+'</td><td class="n">'+t.pages+'</td>'
+      +'<td class="n">'+acc+'</td>'
+      +'<td class="n">'+(t.quizTotal?t.quizRight+"/"+t.quizTotal:"—")+'</td>'
+      +'<td class="n">'+t.rereads+'</td>'
+      +'<td>'+(t.lastSeen?new Date(t.lastSeen).toLocaleDateString():"—")+'</td></tr>';
+  });
+  h+='</table>';
+  const all={}, look={};
+  rows.forEach(t=>{ Object.keys(t.tapped||{}).forEach(w=>all[w]=(all[w]||0)+t.tapped[w]);
+                    Object.keys(t.lookedUp||{}).forEach(w=>look[w]=(look[w]||0)+t.lookedUp[w]); });
+  if(Object.keys(all).length)
+    h+='<h2>Words the group stopped on</h2><div>'
+      +top(all,24).map(w=>'<span class="pill">'+esc(w)+' <b>'+all[w]+'</b></span>').join("")+'</div>';
+  if(Object.keys(look).length)
+    h+='<h2>Looked up in the word list</h2><div>'
+      +top(look,24).map(w=>'<span class="pill">'+esc(w)+' <b>'+look[w]+'</b></span>').join("")+'</div>';
+  return h;
+}
+
+let SESSIONS=[], EVENTS=[], EVERYONE=[];
 Promise.all([Track.sessions(), Track.events()]).then(([s,e])=>{
   SESSIONS=s.sort((a,b)=>a.start-b.start); EVENTS=e;
   $("scope").textContent=SESSIONS.length
     ? SESSIONS.length+" sessions and "+EVENTS.length+" events recorded on this device"
     : "Nothing recorded on this device yet";
   render(SESSIONS, EVENTS);
-  $("sendmsg").textContent = Track.endpoint()
-    ? "Sending is on. Summaries go out every five minutes and when the app closes."
-    : "Sending is off — set ENDPOINT at the top of track.js to collect every child's "
-      + "reading in one place. Until then this page only knows about this device.";
+  $("sendmsg").textContent = Track.topic()
+    ? "Sending is on, to ntfy topic " + Track.topic() + "."
+    : "No topic set on this device. Open this page with ?t=<topic> once to set it.";
 }).catch(e=>{
   $("scope").textContent = "Could not read the stored data: " + e;
 });
+(async ()=>{
+  const host=document.createElement("div");
+  $("out").parentNode.insertBefore(host,$("out"));
+  if(!Track.topic()){
+    host.innerHTML='<h2>Everyone</h2><p class="sub">No ntfy topic set on this device, '
+      +'so only this device is shown below. Open this page once with '
+      +'<code>?t=&lt;topic&gt;</code> to connect it.</p>';
+    return;
+  }
+  host.innerHTML='<h2>Everyone</h2><p class="sub">Loading…</p>';
+  try{
+    EVERYONE = await fromNtfy() || [];
+    host.innerHTML='<h2>Everyone</h2><p class="sub">'+EVERYONE.length
+      +' reader(s) reporting to topic <code>'+esc(Track.topic())+'</code></p>'
+      +renderEveryone(EVERYONE)
+      +'<p class="sub" style="margin-top:10px">Below is only this device.</p>';
+  }catch(e){
+    host.innerHTML='<h2>Everyone</h2><p class="sub">Could not reach ntfy: '+esc(e.message)+'</p>';
+  }
+})();
+
 $("csv").onclick=()=>dl("reading-stats.csv", toCSV(SESSIONS.map(Track.summary)),"text/csv");
 $("json").onclick=()=>dl("reading-stats.json",
-  JSON.stringify({sessions:SESSIONS,events:EVENTS},null,1),"application/json");
+  JSON.stringify({everyone:EVERYONE,sessions:SESSIONS,events:EVENTS},null,1),"application/json");
+const grpBtn=document.createElement("button");
+grpBtn.textContent="Download everyone (CSV)";
+grpBtn.onclick=()=>dl("everyone.csv", toCSV(EVERYONE.map(t=>({
+  name:t.name, student:t.student, minutes:t.minutes, days:t.days, visits:t.visits,
+  pages:t.pages, sentences:t.sentences, rereads:t.rereads, wordTaps:t.wordTaps,
+  glossary:t.glossary, quizRight:t.quizRight, quizTotal:t.quizTotal,
+  accuracy:t.practiceAll?Math.round(t.practiceGot/t.practiceAll*100):"",
+  topTapped:top(t.tapped||{},10).join(" "),
+  books:top(t.books||{},6).join(" "),
+  lastSeen:t.lastSeen?new Date(t.lastSeen).toISOString():""
+}))),"text/csv");
+$("csv").parentNode.insertBefore(grpBtn,$("csv"));
 $("send").onclick=()=>Track.flush("manual").then(r=>{
   $("sendmsg").textContent = r && r.skipped ? "No endpoint set yet — nothing to send to."
     : "Sent "+((r&&r.sent)||0)+" session summaries.";

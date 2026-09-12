@@ -138,6 +138,59 @@ Notes for whoever maintains this:
 - Requires https or localhost for the microphone. The live Pages site qualifies.
   iOS Safari has had MediaRecorder since 14.3 and file sharing since 15.
 
+## Who is reading, and how it is going
+
+`students.json` is the roster. Add a child and they get a short code:
+
+```sh
+python3 tools/students.py add Roberta 1234 --avatar 🦊
+python3 tools/students.py list
+```
+
+Hand each child a link carrying their code and the reporting topic:
+
+```
+index.html?s=uz57&t=<your-topic>
+```
+
+They tap their name and four numbers. The PIN stops a sibling poking at
+someone else's reading and nothing more — it is checked on the device and the
+roster is public, so treat it as a speed bump. Past a handful of children this
+wants real accounts and a database.
+
+### What gets recorded
+
+Sentences read with their mode and speed, pages seen, books opened, words
+tapped in the story, glossary lookups, quiz answers, and per-page reading
+accuracy. All of it goes to IndexedDB on the device, so the app works offline
+and nothing is lost waiting to be sent.
+
+The two most telling numbers are not the obvious ones: **tapped words** are the
+words a child did not know at a glance, and **re-reads** are the clearest sign
+they liked a book.
+
+### Collecting it in one place
+
+Summaries go to [ntfy.sh](https://ntfy.sh), which needs no account and no key
+and opens in China. Pick a long random topic, once:
+
+```sh
+python3 -c "import secrets;print('rra-'+secrets.token_urlsafe(12).lower()[:14])"
+```
+
+That topic is the only secret there is — anyone who knows it can read the
+messages and post to it — so it travels in the links you hand out rather than
+living in this repo. The first visit stores it on the device.
+
+Each send carries the child's **running totals**, not just what is new, because
+ntfy drops messages after about half a day. The newest message per child is
+always the whole picture. Sends happen every five minutes, when the app is
+closed, and on demand.
+
+Open `stats.html?t=<your-topic>` to see everyone, with CSV and JSON download.
+It is not linked from anywhere, which is the only thing making it private.
+Or read the raw messages at `https://ntfy.sh/<your-topic>`.
+
 ## Notes on behaviour
 
 - **Read-aloud** uses the device's built-in speech synthesis. Voice quality varies a

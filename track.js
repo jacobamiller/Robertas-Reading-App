@@ -11,7 +11,17 @@
 (function(global){
 "use strict";
 
-const ENDPOINT = "";              // set to a Google Apps Script web app URL
+/* Where the summaries go.
+   ntfy.sh takes a plain POST with no account and no key, and it opens in
+   China, which ruled out most of the alternatives. The topic name is the only
+   secret there is — anyone who knows it can read the messages and post to it —
+   so it is deliberately long and random, and it travels in the link you hand
+   each child (?t=<topic>) rather than sitting in this public repo.
+
+   ntfy drops messages after about half a day, so every send carries the
+   child's running totals rather than just what is new. The newest message per
+   child is always the whole picture, and nothing is lost to expiry.          */
+const NTFY = "https://ntfy.sh/";
 const FLUSH_MS = 5 * 60 * 1000;   // try to send every five minutes
 const DB = "rra", DBV = 1;
 
@@ -178,8 +188,56 @@ function roll(type, d){
 function save(){ if(session) put("sessions", session).catch(()=>{}); }
 
 /* ---------- sending ---------- */
+function topic(){
+  try{
+    const fromUrl = new URLSearchParams(location.search).get("t");
+    if(fromUrl){ localStorage.setItem("ntfy", fromUrl); return fromUrl; }
+    return localStorage.getItem("ntfy") || "";
+  }catch(e){ return ""; }
+}
+
 const topN = (o,n) => Object.keys(o).sort((a,b)=>o[b]-o[a]).slice(0,n)
                         .map(k=>k+":"+o[k]).join(" ");
+const merge = (t,o) => { Object.keys(o||{}).forEach(k=>t[k]=(t[k]||0)+o[k]); return t; };
+
+/* Everything this child has done on this device, not just this sitting. */
+function cumulative(list, who){
+  const mine = list.filter(s=>s.student === who);
+  const t = {student:who, name:(mine[0]||{}).name||who,
+             visits:mine.length, minutes:0, pages:0, sentences:0, rereads:0,
+             wordTaps:0, glossary:0, quizzes:0, quizRight:0, quizTotal:0,
+             practiceGot:0, practiceAll:0,
+             books:{}, tapped:{}, lookedUp:{}, modes:{}, speeds:{}, days:{}};
+  mine.forEach(s=>{
+    t.minutes += (s.last - s.start)/60000;
+    ["pages","sentences","rereads","wordTaps","glossary","quizzes",
+     "quizRight","quizTotal","practiceGot","practiceAll"].forEach(k=>t[k]+=s[k]||0);
+    merge(t.books,s.booksOpened); merge(t.tapped,s.tappedWords);
+    merge(t.lookedUp,s.glossaryWords); merge(t.modes,s.modes); merge(t.speeds,s.speeds);
+    t.days[new Date(s.start).toISOString().slice(0,10)] = 1;
+    if(s.last > (t.lastSeen||0)) t.lastSeen = s.last;
+  });
+  t.minutes = Math.round(t.minutes*10)/10;
+  t.days = Object.keys(t.days).length;
+  return t;
+}
+
+/* Readable at a glance in the ntfy web page, and still simple to parse. */
+function asText(t){
+  const acc = t.practiceAll ? Math.round(t.practiceGot/t.practiceAll*100)+"%" : "-";
+  return [
+    t.name + " · " + new Date().toISOString().slice(0,16).replace("T"," "),
+    "minutes " + t.minutes + "  days " + t.days + "  visits " + t.visits +
+      "  pages " + t.pages + "  sentences " + t.sentences,
+    "accuracy " + acc + "  quiz " + t.quizRight + "/" + t.quizTotal +
+      "  rereads " + t.rereads,
+    "books " + (topN(t.books,6) || "-"),
+    "tapped " + (topN(t.tapped,10) || "-"),
+    "lookedup " + (topN(t.lookedUp,10) || "-"),
+    "modes " + (topN(t.modes,4) || "-") + "  speeds " + (topN(t.speeds,4) || "-"),
+    "json " + JSON.stringify(t)
+  ].join("\n");
+}
 function summary(s){
   return {
     when: new Date(s.start).toISOString(),
@@ -199,30 +257,27 @@ function summary(s){
   };
 }
 
-/* Unsent sessions queue up, so a phone that was offline catches up later
-   rather than losing the day. */
+/* A send is one message holding this child's running totals. It is safe to
+   miss one — the next carries everything anyway — so a failure is quietly
+   left for next time rather than retried. */
 function flush(why, useBeacon){
-  if(!ENDPOINT) return Promise.resolve({skipped:"no endpoint"});
+  const t = topic();
+  if(!t) return Promise.resolve({skipped:"no topic set"});
   save();
   return all("sessions").then(list=>{
-    const due = list.filter(s => !s.sent && (s.id !== (session&&session.id) || why !== "timer" || true));
-    if(!due.length) return {sent:0};
-    const body = JSON.stringify({v:1, why:why, rows: due.map(summary)});
-    // text/plain dodges the CORS preflight that Apps Script will not answer
+    const who = session ? session.student : null;
+    if(!who) return {skipped:"nobody signed in"};
+    const body = asText(cumulative(list, who));
+    const url = NTFY + encodeURIComponent(t);
     if(useBeacon && navigator.sendBeacon){
-      navigator.sendBeacon(ENDPOINT, new Blob([body],{type:"text/plain;charset=utf-8"}));
-      return mark(due).then(()=>({sent:due.length, via:"beacon"}));
+      // text/plain keeps it a simple request, so there is no preflight to answer
+      navigator.sendBeacon(url, new Blob([body],{type:"text/plain;charset=utf-8"}));
+      return {sent:1, via:"beacon"};
     }
-    return fetch(ENDPOINT,{method:"POST",mode:"no-cors",
-                           headers:{"Content-Type":"text/plain;charset=utf-8"},body:body})
-      .then(()=>mark(due)).then(()=>({sent:due.length, via:"fetch"}))
-      .catch(e=>({error:String(e)}));   // stays unsent, tried again next time
+    return fetch(url,{method:"POST",body:body})
+      .then(r=>({sent:r.ok?1:0, status:r.status, via:"fetch"}))
+      .catch(e=>({error:String(e)}));
   });
-}
-function mark(rows){
-  // the live session is never closed off, so it keeps updating and resends
-  return Promise.all(rows.filter(r=>r.id!==(session&&session.id))
-                         .map(r=>put("sessions",Object.assign({},r,{sent:true}))));
 }
 
 /* ---------- exports ---------- */
@@ -236,7 +291,9 @@ global.Track = {
   sessions: () => all("sessions"),
   summary: summary,
   meta: meta,
-  endpoint: () => ENDPOINT,
+  topic: topic,
+  cumulative: cumulative,
+  ntfy: NTFY,
   clear: () => open().then(()=>Promise.all(["events","sessions"].map(st=>
             new Promise(res=>{const q=tx(st,"readwrite").clear();q.onsuccess=()=>res();q.onerror=()=>res();}))))
 };
