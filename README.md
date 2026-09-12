@@ -29,6 +29,11 @@ books/<slug>/
   book.json             title, credits, pages, glossary, quiz
   cover.webp
   1.webp … N.webp       one image per page
+progress.html           the teacher's view — everyone, and this device
+reading-log.js          records what happens, to IndexedDB
+progress-page.js        the teacher view's code
+who.js                  the "Who is reading?" screen
+students.json           the roster
 legacy/reader-v1.5.html the original all-in-one version, kept for reference
 ```
 
@@ -187,11 +192,18 @@ ntfy drops messages after about half a day. The newest message per child is
 always the whole picture. Sends happen every five minutes, when the app is
 closed, and on demand.
 
-Open `stats.html?t=<your-topic>` to see everyone, with CSV and JSON download.
+Open `progress.html?t=<your-topic>` to see everyone, with CSV and JSON download.
 It is not linked from anywhere, which is the only thing making it private.
 Or read the raw messages at `https://ntfy.sh/<your-topic>`.
 
 ## Notes on behaviour
+
+- **Do not give a top-level `const` the name of a built-in global** — `top`,
+  `self`, `name`, `status` and friends. In a classic script that is a
+  SyntaxError and the *whole file* silently fails to evaluate. It will not show
+  up in `node --check`, nor in `new Function(src)`, nor in `eval(src)`, because
+  all three give lexical declarations a scope of their own. Only a real
+  `<script>` tag does. `python3 tools/checkjs.py` checks for it.
 
 - **Read-aloud** uses the device's built-in speech synthesis. Voice quality varies a
   lot by device; the Settings sheet lets you pick, and the choice is remembered.

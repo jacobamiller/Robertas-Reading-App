@@ -40,6 +40,7 @@ Each child's phone keeps its own record, so to see everyone in one place you
 need the sending step — see the bottom of this page.</div>
 
 <div id="out"><div id="empty">No reading recorded on this device yet.</div></div>
+<noscript><p class="note">This page needs JavaScript.</p></noscript>
 
 <h2>Data</h2>
 <button id="csv">Download CSV</button>
@@ -48,6 +49,18 @@ need the sending step — see the bottom of this page.</div>
 <button id="wipe" class="danger">Erase this device's data</button>
 <p class="sub" id="sendmsg"></p>
 
-<script src="track.js?v=1789212428"></script>
-<script src="stats.js?v=1789212428"></script>
+<script src="reading-log.js?v=1789213839"></script>
+<script src="progress-page.js?v=1789213839"></script>
+<script>
+// If the page script never runs — a content blocker will stop a file it does
+// not like without a word — say so rather than showing an empty page.
+setTimeout(function(){
+  if(!window.__progressRan){
+    document.getElementById("scope").innerHTML =
+      "<b>The page script did not run.</b> Something in this browser is blocking "
+      + "<code>progress-page.js</code> — usually an ad or privacy blocker. "
+      + "Try another browser, or allow scripts for this site.";
+  }
+}, 2500);
+</script>
 </body></html>

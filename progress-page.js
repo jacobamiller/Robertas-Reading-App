@@ -1,3 +1,4 @@
+window.__progressRan = true;
 /* The stats page. Kept in its own file rather than inline: some browser
    extensions block inline scripts, and an external file is not treated the
    same way. */
@@ -10,7 +11,7 @@ function tally(list){
   list.forEach(o=>Object.keys(o||{}).forEach(k=>out[k]=(out[k]||0)+o[k]));
   return out;
 }
-const top=(o,n)=>Object.keys(o).sort((a,b)=>o[b]-o[a]).slice(0,n);
+const topKeys=(o,n)=>Object.keys(o).sort((a,b)=>o[b]-o[a]).slice(0,n);
 
 function render(sessions, events){
   if(!sessions.length) return;
@@ -56,10 +57,10 @@ function render(sessions, events){
     h+='<h2>Words they stopped on</h2><p class="sub">Tapping a word means it was not '
      +'known at a glance. The most-tapped words are the vocabulary to work on.</p>';
     if(Object.keys(tapped).length)
-      h+='<div>'+top(tapped,20).map(w=>'<span class="pill">'+esc(w)+' <b>'+tapped[w]+'</b></span>').join("")+'</div>';
+      h+='<div>'+topKeys(tapped,20).map(w=>'<span class="pill">'+esc(w)+' <b>'+tapped[w]+'</b></span>').join("")+'</div>';
     if(Object.keys(looked).length)
       h+='<p class="sub" style="margin-top:12px">Looked up in the word list</p><div>'
-        +top(looked,20).map(w=>'<span class="pill">'+esc(w)+' <b>'+looked[w]+'</b></span>').join("")+'</div>';
+        +topKeys(looked,20).map(w=>'<span class="pill">'+esc(w)+' <b>'+looked[w]+'</b></span>').join("")+'</div>';
   }
 
   // how they read
@@ -81,7 +82,7 @@ function render(sessions, events){
     h+='<h2>Books</h2><p class="sub">Opening a book again is the clearest sign a '
      +'child liked it.</p><table><tr><th>Book</th><th class="n">Opened</th><th></th></tr>';
     const mx=Math.max(...Object.values(books));
-    top(books,20).forEach(b=>{
+    topKeys(books,20).forEach(b=>{
       h+='<tr><td>'+esc(b)+'</td><td class="n">'+books[b]+'</td>'
         +'<td><span class="bar" style="width:'+(books[b]/mx*160)+'px"></span></td></tr>';
     });
@@ -94,7 +95,7 @@ function render(sessions, events){
   if(Object.keys(quits).length){
     h+='<h2>Where reading stopped</h2><p class="sub">The page a session ended on. '
      +'The same page over and over is usually where a book gets too hard, or too dull.</p><div>'
-     +top(quits,12).map(k=>'<span class="pill">'+esc(k)+' <b>'+quits[k]+'</b></span>').join("")+'</div>';
+     +topKeys(quits,12).map(k=>'<span class="pill">'+esc(k)+' <b>'+quits[k]+'</b></span>').join("")+'</div>';
   }
   $("out").innerHTML=h;
 }
@@ -157,10 +158,10 @@ function renderEveryone(rows){
                     Object.keys(t.lookedUp||{}).forEach(w=>look[w]=(look[w]||0)+t.lookedUp[w]); });
   if(Object.keys(all).length)
     h+='<h2>Words the group stopped on</h2><div>'
-      +top(all,24).map(w=>'<span class="pill">'+esc(w)+' <b>'+all[w]+'</b></span>').join("")+'</div>';
+      +topKeys(all,24).map(w=>'<span class="pill">'+esc(w)+' <b>'+all[w]+'</b></span>').join("")+'</div>';
   if(Object.keys(look).length)
     h+='<h2>Looked up in the word list</h2><div>'
-      +top(look,24).map(w=>'<span class="pill">'+esc(w)+' <b>'+look[w]+'</b></span>').join("")+'</div>';
+      +topKeys(look,24).map(w=>'<span class="pill">'+esc(w)+' <b>'+look[w]+'</b></span>').join("")+'</div>';
   return h;
 }
 
@@ -208,8 +209,8 @@ grpBtn.onclick=()=>dl("everyone.csv", toCSV(EVERYONE.map(t=>({
   pages:t.pages, sentences:t.sentences, rereads:t.rereads, wordTaps:t.wordTaps,
   glossary:t.glossary, quizRight:t.quizRight, quizTotal:t.quizTotal,
   accuracy:t.practiceAll?Math.round(t.practiceGot/t.practiceAll*100):"",
-  topTapped:top(t.tapped||{},10).join(" "),
-  books:top(t.books||{},6).join(" "),
+  topTapped:topKeys(t.tapped||{},10).join(" "),
+  books:topKeys(t.books||{},6).join(" "),
   lastSeen:t.lastSeen?new Date(t.lastSeen).toISOString():""
 }))),"text/csv");
 $("csv").parentNode.insertBefore(grpBtn,$("csv"));
