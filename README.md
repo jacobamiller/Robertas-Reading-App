@@ -198,9 +198,13 @@ ntfy forgets a message after about half a day, so it only ever holds where
 each child is *now*. To keep a record, snapshot it into the repo:
 
 ```sh
-python3 tools/snapshot.py <your-topic>            # append to data/history.csv
-python3 tools/snapshot.py <your-topic> --commit   # and commit it
+python3 tools/snapshot.py <your-topic>          # write data/history.csv only
+python3 tools/snapshot.py <your-topic> --push   # and commit and push it
 ```
+
+Nothing writes to GitHub on its own. Opening the app or the progress page does
+not do it — the phones post to ntfy, and this is the only step that puts
+anything in the repo.
 
 One row per child per run, skipping anyone who has not read since the last
 snapshot, so running it often costs nothing. Because each message holds running
@@ -214,7 +218,7 @@ GitHub, and there is no token anywhere in this repo to leak.
 Run it daily by hand, or from cron:
 
 ```
-0 20 * * *  cd /path/to/Robertas-Reading-App && python3 tools/snapshot.py <topic> --commit
+0 20 * * *  cd /path/to/Robertas-Reading-App && python3 tools/snapshot.py <topic> --push
 ```
 
 Open `progress.html?t=<your-topic>` to see everyone, with CSV and JSON download.

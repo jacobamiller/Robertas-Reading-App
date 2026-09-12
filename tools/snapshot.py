@@ -3,7 +3,7 @@
 Take a snapshot of everyone's reading and keep it in the repo.
 
     python3 tools/snapshot.py rra-zjou8m56j6rmyn
-    python3 tools/snapshot.py rra-zjou8m56j6rmyn --commit
+    python3 tools/snapshot.py rra-zjou8m56j6rmyn --push
 
 ntfy forgets a message after about half a day, so it only ever holds "where
 each child is now". Running this regularly turns that into a history: one row
@@ -81,6 +81,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("topic")
     ap.add_argument("--commit", action="store_true", help="git commit the snapshot")
+    ap.add_argument("--push", action="store_true", help="commit and push to GitHub")
     a = ap.parse_args()
 
     readers = fetch(a.topic)
@@ -119,12 +120,16 @@ def main():
               f"quiz {r['quizRight']}/{r['quizTotal']}")
     print(f"\n{len(fresh)} row(s) added to data/history.csv")
 
-    if a.commit:
+    if a.commit or a.push:
         subprocess.run(["git", "add", "data"], cwd=ROOT, check=True)
         subprocess.run(["git", "commit", "-q", "-m",
                         f"Reading snapshot {taken[:16].replace('T', ' ')}"],
                        cwd=ROOT, check=True)
-        print("committed — push when you are ready")
+        if a.push:
+            subprocess.run(["git", "push", "-q", "origin", "main"], cwd=ROOT, check=True)
+            print("committed and pushed")
+        else:
+            print("committed — not pushed, so it is not on GitHub yet")
 
 
 if __name__ == "__main__":
