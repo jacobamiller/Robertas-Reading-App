@@ -245,8 +245,8 @@ audio{width:100%;margin-top:10px}
     <h3>Reading speed</h3>
     <div class="row">
       <button class="chip" data-rate=".4">Very slow</button>
-      <button class="chip on" data-rate=".7">Slow</button>
-      <button class="chip" data-rate="1">Normal</button>
+      <button class="chip" data-rate=".7">Slow</button>
+      <button class="chip on" data-rate="1">Normal</button>
       <button class="chip" data-rate="1.35">Fast</button>
     </div>
     <h3>Voice</h3>
@@ -295,9 +295,11 @@ let BOOK=null, PAGES=[], WORDS=[], QUIZ=[];
 const imgSrc=key=>BASE+(BOOK.images[key]||key+".webp");
 
 /* ---------- state ---------- */
-let page=0, rate=.7, mode="listen", speaking=false, view="read";
+let page=0, rate=1, mode="listen", speaking=false, view="read";
+try{ const r=parseFloat(localStorage.getItem("rate")); if(r>0) rate=r; }catch(e){}
 let scores=[], sr=null;
 let tokens=[], curSent=-1, timers=[], voice=null;
+let AUDIO=null, clip=null, clipRateAdj=1;  // pre-rendered narration, when the book has it
 const $=id=>document.getElementById(id);
 
 /* ---------- voice ---------- */
@@ -372,16 +374,100 @@ function clearMarks(){
 }
 function clearTimers(){timers.forEach(clearTimeout);timers=[]}
 
+/* ---------- pre-rendered narration -------------------------------------
+   When a book ships an audio/ folder, sentences are played from file instead
+   of spoken by the device, so every phone reads in the same voice. Anything
+   without audio still goes through speechSynthesis exactly as before.      */
+const clipName=si=>"p"+(page+1)+"_s"+(si+1)+"."+((AUDIO&&AUDIO.ext)||"m4a");
+const clipInfo=si=>(AUDIO&&AUDIO.clips&&AUDIO.clips[clipName(si)])||null;
+const clipUrl=si=>clipInfo(si)?BASE+"audio/"+clipName(si):null;
+/* Each clip carries its own nudge toward the book's target pace, because the
+   model's pace wanders sentence to sentence. Speed chips multiply through it,
+   so "Normal" means the same speed on every sentence. */
+const clipAdjust=si=>{const c=clipInfo(si); return (c&&c.adjust)||1;};
+
+/* The speed chips were tuned for speechSynthesis, which *synthesises* slow
+   speech cleanly. A recorded clip has to be time-stretched instead, which
+   smears if pushed too far — so audio gets its own ladder. The chips keep
+   their labels; the device voice keeps its original values.
+
+   0.45 is where stretching was still clean by ear, on both a Mac and a phone
+   (Safari and Chrome stretch differently, so both were checked). Clips also
+   carry a pace adjustment of 0.80-1.13, and the two multiply, so the slowest
+   chip is set where even the most-adjusted clip stays at or above that:
+   0.57 x 0.80 = 0.456.
+
+   Effective pace, against the 145 wpm the clips are normalised to:
+     Very slow 83 | Slow 116 | Normal 145 | Fast 181                          */
+const AUDIO_RATE={"0.4":0.57, "0.7":0.80, "1":1, "1.35":1.25};
+const MIN_AUDIO_RATE=0.45;
+function audioRate(){
+  const base=AUDIO_RATE[String(rate)];
+  return Math.max(MIN_AUDIO_RATE,(base===undefined?rate:base)*clipRateAdj);
+}
+
+function stopClip(){
+  if(!clip) return;
+  try{ clip.pause(); }catch(e){}
+  clip.onended=clip.onerror=clip.onloadedmetadata=null;
+  clip=null;
+}
+/* Walk the highlight across a sentence's words over a known duration, sharing
+   the time out by word length. This is the same shape the boundary-less
+   fallback has always used; audio just gives it a real duration to work with. */
+function runWordTimer(marks,ms){
+  const w=el=>el.textContent.length+1.5;
+  const unit=marks.reduce((n,el)=>n+w(el),0)||1;
+  let t=0;
+  marks.forEach(el=>{
+    timers.push(setTimeout(()=>{
+      marks.forEach(x=>x.classList.remove("on")); el.classList.add("on");
+    },t));
+    t+=ms*w(el)/unit;
+  });
+}
+const estimateMs=marks=>marks.reduce((n,el)=>n+el.textContent.length*62+90,0);
+
+function playClip(url,marks,then,fallback,adjust){
+  stopClip();
+  clip=new Audio(url);
+  clipRateAdj=adjust||1;
+  clip.playbackRate=audioRate();
+  // without this the speed chips would pitch-shift the narrator
+  clip.preservesPitch=clip.mozPreservesPitch=clip.webkitPreservesPitch=true;
+  const startTimer=()=>{
+    const d=clip&&clip.duration;
+    runWordTimer(marks,(d&&isFinite(d)?d*1000:estimateMs(marks))/audioRate());
+  };
+  if(clip.readyState>=1) startTimer(); else clip.onloadedmetadata=startTimer;
+  clip.onended=()=>{
+    marks.forEach(el=>el.classList.remove("on"));
+    stopClip(); clearTimers();
+    if(then) then();
+  };
+  // a missing or unplayable clip should not strand the reader
+  clip.onerror=()=>{ stopClip(); clearTimers(); fallback(); };
+  const pr=clip.play();
+  if(pr&&pr.catch) pr.catch(()=>{ stopClip(); clearTimers(); fallback(); });
+}
+
 /* ---------- speaking ---------- */
 function speakSentence(si,then){
+  curSent=si;
+  clearHi(); clearTimers(); stopClip();
+  const sentEl=document.querySelector('.sent[data-si="'+si+'"]');
+  if(sentEl) sentEl.classList.add("on");
+  const marks=tokens[si];
+
+  const url=clipUrl(si);
+  if(url){ playClip(url,marks,then,()=>speakAloud(si,then),clipAdjust(si)); return; }
+  speakAloud(si,then);
+}
+function speakAloud(si,then){
   const text=PAGES[page].s[si];
   const u=new SpeechSynthesisUtterance(text);
   if(voice) u.voice=voice;
   u.rate=rate; u.pitch=1.05;
-  curSent=si;
-  clearHi(); clearTimers();
-  const sentEl=document.querySelector('.sent[data-si="'+si+'"]');
-  if(sentEl) sentEl.classList.add("on");
 
   let gotBoundary=false;
   const marks=tokens[si];
@@ -396,16 +482,7 @@ function speakSentence(si,then){
   // fallback: if the browser gives us no word boundaries, estimate them
   timers.push(setTimeout(()=>{
     if(gotBoundary) return;
-    const chars=marks.reduce((n,el)=>n+el.textContent.length,0);
-    const dur=(chars*62+marks.length*90)/rate;
-    let t=0;
-    marks.forEach(el=>{
-      const share=(el.textContent.length*62+90)/rate;
-      timers.push(setTimeout(()=>{
-        marks.forEach(x=>x.classList.remove("on")); el.classList.add("on");
-      },t));
-      t+=share;
-    });
+    runWordTimer(marks,estimateMs(marks)/rate);
   },350));
 
   u.onend=()=>{
@@ -451,7 +528,7 @@ function readPage(from){
 }
 const LABEL={listen:"Read to me",echo:"Start — my turn",practice:"Start — score me"};
 function stopAll(){
-  speaking=false; speechSynthesis.cancel(); clearTimers(); clearHi();
+  speaking=false; speechSynthesis.cancel(); stopClip(); clearTimers(); clearHi();
   try{sr&&sr.stop()}catch(e){}
   document.querySelectorAll(".sent").forEach(e=>e.style.opacity="");
   $("play").textContent=LABEL[mode];
@@ -459,7 +536,34 @@ function stopAll(){
   $("hint").classList.remove("big-hint");
   $("hint").textContent="";
 }
-function say(text){
+/* Must match word_key() in tools/tts.py, or the lookup misses. */
+const wordKey=t=>String(t).toLowerCase().replace(/[^a-z]/g,"");
+const REPLY_KEY={"yes! well done.":"_yes","not this time.":"_no"};
+function wordClip(text){
+  if(!AUDIO||!AUDIO.words) return null;
+  const k=REPLY_KEY[String(text).toLowerCase().trim()]||wordKey(text);
+  return k&&AUDIO.words[k] ? BASE+"audio/words/"+k+"."+(AUDIO.ext||"m4a") : null;
+}
+/* Single words and quiz replies come from the same narrator as the story when
+   the book has them. `useDevice` is for the settings voice preview, which is
+   the one place that genuinely has to demonstrate the device's own voice.
+   A word the renderer could not produce falls through to speechSynthesis. */
+function say(text,useDevice){
+  speechSynthesis.cancel(); stopClip();
+  const url=useDevice?null:wordClip(text);
+  if(url){
+    clipRateAdj=1;
+    const a=new Audio(url);
+    a.preservesPitch=a.mozPreservesPitch=a.webkitPreservesPitch=true;
+    // a tapped word wants to be clear, so never as slow as the story can go
+    a.playbackRate=Math.max(.85,audioRate());
+    const pr=a.play();
+    if(pr&&pr.catch) pr.catch(()=>sayAloud(text));
+    return;
+  }
+  sayAloud(text);
+}
+function sayAloud(text){
   speechSynthesis.cancel();
   const u=new SpeechSynthesisUtterance(text);
   if(voice) u.voice=voice; u.rate=rate;
@@ -580,17 +684,23 @@ $("text").onclick=e=>{
 document.querySelectorAll("[data-rate]").forEach(b=>{
   b.onclick=()=>{
     rate=parseFloat(b.dataset.rate);
+    try{ localStorage.setItem("rate",rate); }catch(e){}
+    if(clip) clip.playbackRate=audioRate();
     document.querySelectorAll("[data-rate]").forEach(x=>x.classList.remove("on"));
     b.classList.add("on");
   };
+});
+// show the remembered speed on the chips
+document.querySelectorAll("[data-rate]").forEach(b=>{
+  b.classList.toggle("on", parseFloat(b.dataset.rate)===rate);
 });
 const sampleLine=()=>(BOOK&&BOOK.voiceSample)||"This is how I will read to you.";
 $("voicesel").onchange=e=>{
   const m=enVoices().find(x=>x.name===e.target.value);
   if(m){voice=m;localStorage.setItem("voiceName",m.name);}
-  stopAll(); say(sampleLine());
+  stopAll(); say(sampleLine(),true);
 };
-$("tryvoice").onclick=()=>{stopAll();say(sampleLine())};
+$("tryvoice").onclick=()=>{stopAll();say(sampleLine(),true)};
 function openSheet(o){$("sheet").classList.toggle("open",o)}
 $("gear").onclick=()=>{stopAll();openSheet(true)};
 $("done").onclick=()=>openSheet(false);
@@ -708,6 +818,15 @@ async function loadBook(){
   WORDS=Array.isArray(raw.words)?raw.words:[];
   QUIZ=Array.isArray(raw.quiz)?raw.quiz:[];
   if(!BOOK.images) BOOK.images={};
+
+  // narration is optional: if the manifest will not load, fall through to the
+  // device voice rather than failing the book
+  if(BOOK.audio){
+    try{
+      const ar=await fetch(BASE+"audio/index.json",{cache:"no-cache"});
+      if(ar.ok) AUDIO=await ar.json();
+    }catch(e){ AUDIO=null; }
+  }
 
   document.title=BOOK.title+(BOOK.subtitle?" — "+BOOK.subtitle:"");
   $("covertitle").textContent=BOOK.title;

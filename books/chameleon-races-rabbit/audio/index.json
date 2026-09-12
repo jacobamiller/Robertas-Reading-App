@@ -1,0 +1,146 @@
+{
+ "clips": {
+  "p1_s1.m4a": {
+   "sec": 4.72,
+   "wpm": 165.3,
+   "adjust": 0.877
+  },
+  "p2_s1.m4a": {
+   "sec": 3.28,
+   "wpm": 128.0,
+   "adjust": 1.133
+  },
+  "p2_s2.m4a": {
+   "sec": 3.84,
+   "wpm": 187.5,
+   "adjust": 0.8
+  },
+  "p2_s3.m4a": {
+   "sec": 1.92,
+   "wpm": 156.3,
+   "adjust": 0.928
+  },
+  "p2_s4.m4a": {
+   "sec": 2.24,
+   "wpm": 187.5,
+   "adjust": 0.8
+  },
+  "p2_s5.m4a": {
+   "sec": 1.84,
+   "wpm": 163.0,
+   "adjust": 0.89
+  },
+  "p3_s1.m4a": {
+   "sec": 3.12,
+   "wpm": 192.3,
+   "adjust": 0.8
+  },
+  "p4_s1.m4a": {
+   "sec": 3.76,
+   "wpm": 159.6,
+   "adjust": 0.909
+  },
+  "p5_s1.m4a": {
+   "sec": 3.68,
+   "wpm": 146.7,
+   "adjust": 0.988
+  },
+  "p6_s1.m4a": {
+   "sec": 4.16,
+   "wpm": 158.7,
+   "adjust": 0.914
+  },
+  "p6_s2.m4a": {
+   "sec": 3.84,
+   "wpm": 171.9,
+   "adjust": 0.844
+  },
+  "p7_s1.m4a": {
+   "sec": 3.2,
+   "wpm": 150.0,
+   "adjust": 0.967
+  },
+  "p7_s2.m4a": {
+   "sec": 4.08,
+   "wpm": 147.1,
+   "adjust": 0.986
+  },
+  "p7_s3.m4a": {
+   "sec": 1.68,
+   "wpm": 214.3,
+   "adjust": 0.8
+  },
+  "p8_s1.m4a": {
+   "sec": 2.72,
+   "wpm": 154.4,
+   "adjust": 0.939
+  },
+  "p9_s1.m4a": {
+   "sec": 7.2,
+   "wpm": 158.3,
+   "adjust": 0.916
+  },
+  "p9_s2.m4a": {
+   "sec": 3.76,
+   "wpm": 159.6,
+   "adjust": 0.909
+  },
+  "p10_s1.m4a": {
+   "sec": 5.6,
+   "wpm": 171.4,
+   "adjust": 0.846
+  },
+  "p10_s2.m4a": {
+   "sec": 1.68,
+   "wpm": 142.9,
+   "adjust": 1.015
+  },
+  "p11_s1.m4a": {
+   "sec": 2.24,
+   "wpm": 160.7,
+   "adjust": 0.902
+  },
+  "p11_s2.m4a": {
+   "sec": 3.76,
+   "wpm": 143.6,
+   "adjust": 1.01
+  }
+ },
+ "v": 2,
+ "ext": "m4a",
+ "voice": "aiden-storyteller",
+ "speaker": "Aiden",
+ "target_wpm": 145.0,
+ "words": {
+  "_no": {
+   "sec": 1.28
+  },
+  "_yes": {
+   "sec": 1.84
+  },
+  "amazed": {
+   "sec": 1.68
+  },
+  "chameleon": {
+   "sec": 1.2
+  },
+  "prize": {
+   "sec": 1.2
+  },
+  "race": {
+   "sec": 0.32
+  },
+  "signal": {
+   "sec": 1.52
+  },
+  "slow": {
+   "sec": 1.44
+  },
+  "tail": {
+   "sec": 0.96
+  },
+  "temper": {
+   "sec": 1.2
+  }
+ }
+}

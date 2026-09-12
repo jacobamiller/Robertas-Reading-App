@@ -1,0 +1,7 @@
+{
+ "name": "aiden-storyteller",
+ "speaker": "Aiden",
+ "instruct": "bright, playful children's storyteller, animated delivery, neutral American accent, warm and encouraging",
+ "ref_text": "The animals gathered by the river to watch the race, and the morning sun was warm and bright.",
+ "note": "Every sentence is generated conditioned on aiden-storyteller.wav so the voice and pace stay put. Rendering straight from the speaker without this reference gave a 2.28x pace spread across one book; with it, 1.54x."
+}
