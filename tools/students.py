@@ -4,7 +4,8 @@ Build students.json — the roster the app shows on its "Who is reading?" screen
 
     python3 tools/students.py add Roberta 1234 --avatar 🦊
     python3 tools/students.py list
-    python3 tools/students.py remove roberta
+    python3 tools/students.py pin ynty 4321
+    python3 tools/students.py remove ynty
 
 Each child gets a short code, which is also their link:
 
@@ -48,6 +49,8 @@ def main():
     a = sub.add_parser("add");    a.add_argument("name"); a.add_argument("pin")
     a.add_argument("--avatar", default="🙂"); a.add_argument("--code")
     sub.add_parser("list")
+    c = sub.add_parser("pin", help="change a PIN, keeping the code and the link")
+    c.add_argument("code"); c.add_argument("pin")
     r = sub.add_parser("remove"); r.add_argument("code")
     args = ap.parse_args()
 
@@ -59,6 +62,18 @@ def main():
         for s in d["students"]:
             print(f"{s['code']:6} {s['avatar']} {s['name']:14} ?s={s['code']}")
         return
+
+    if args.cmd == "pin":
+        if not re.fullmatch(r"\d{4}", args.pin):
+            sys.exit("the PIN must be four digits")
+        for st in d["students"]:
+            if st["code"] == args.code:
+                st["pin"] = pin_hash(st["code"], args.pin)
+                save(d)
+                print(f"{st['name']}'s PIN changed — code and link are unchanged")
+                print(f"their link:  index.html?s={st['code']}")
+                return
+        sys.exit(f"no student with code {args.code}")
 
     if args.cmd == "remove":
         n = len(d["students"])
