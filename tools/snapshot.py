@@ -2,8 +2,8 @@
 """
 Take a snapshot of everyone's reading and keep it in the repo.
 
-    python3 tools/snapshot.py rra-zjou8m56j6rmyn
-    python3 tools/snapshot.py rra-zjou8m56j6rmyn --push
+    python3 tools/snapshot.py <your-topic>
+    python3 tools/snapshot.py <your-topic> --push
 
 ntfy forgets a message after about half a day, so it only ever holds "where
 each child is now". Running this regularly turns that into a history: one row
