@@ -192,6 +192,31 @@ ntfy drops messages after about half a day. The newest message per child is
 always the whole picture. Sends happen every five minutes, when the app is
 closed, and on demand.
 
+### Keeping a history
+
+ntfy forgets a message after about half a day, so it only ever holds where
+each child is *now*. To keep a record, snapshot it into the repo:
+
+```sh
+python3 tools/snapshot.py <your-topic>            # append to data/history.csv
+python3 tools/snapshot.py <your-topic> --commit   # and commit it
+```
+
+One row per child per run, skipping anyone who has not read since the last
+snapshot, so running it often costs nothing. Because each message holds running
+totals, successive rows give you minutes, pages and accuracy over the term —
+open `data/history.csv` in a spreadsheet and chart it.
+
+This runs on **your** machine with the git credentials you already have. The
+children's phones only ever post to ntfy; nothing in the app can write to
+GitHub, and there is no token anywhere in this repo to leak.
+
+Run it daily by hand, or from cron:
+
+```
+0 20 * * *  cd /path/to/Robertas-Reading-App && python3 tools/snapshot.py <topic> --commit
+```
+
 Open `progress.html?t=<your-topic>` to see everyone, with CSV and JSON download.
 It is not linked from anywhere, which is the only thing making it private.
 Or read the raw messages at `https://ntfy.sh/<your-topic>`.

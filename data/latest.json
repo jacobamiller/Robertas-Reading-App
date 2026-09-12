@@ -1,0 +1,95 @@
+{
+ "taken": "2026-09-12T12:25:32+00:00",
+ "readers": [
+  {
+   "student": "uz57",
+   "name": "Roberta",
+   "visits": 2,
+   "minutes": 5,
+   "pages": 8,
+   "sentences": 26,
+   "rereads": 0,
+   "wordTaps": 0,
+   "glossary": 25,
+   "quizzes": 4,
+   "quizRight": 9,
+   "quizTotal": 20,
+   "practiceGot": 0,
+   "practiceAll": 0,
+   "books": {
+    "chameleon-races-rabbit": 1,
+    "big-blue-bus": 1,
+    "lindas-surprise": 1
+   },
+   "tapped": {},
+   "lookedUp": {
+    "chameleon": 1,
+    "race": 3,
+    "tail": 1,
+    "signal": 2,
+    "amazed": 1,
+    "prize": 1,
+    "temper": 1,
+    "bus": 1,
+    "uniform": 1,
+    "excited": 1,
+    "pet": 2,
+    "kitten": 2,
+    "gray": 3,
+    "surprise": 1,
+    "basket": 1,
+    "soft": 1,
+    "birthday": 1,
+    "lap": 1
+   },
+   "modes": {
+    "listen": 26
+   },
+   "speeds": {
+    "1": 26
+   },
+   "days": 1,
+   "lastSeen": 1789214322320,
+   "_at": 1789215852
+  },
+  {
+   "student": "ynty",
+   "name": "Jacob",
+   "visits": 3,
+   "minutes": 1.6,
+   "pages": 6,
+   "sentences": 27,
+   "rereads": 0,
+   "wordTaps": 0,
+   "glossary": 27,
+   "quizzes": 1,
+   "quizRight": 2,
+   "quizTotal": 5,
+   "practiceGot": 0,
+   "practiceAll": 0,
+   "books": {
+    "lindas-surprise": 1
+   },
+   "tapped": {},
+   "lookedUp": {
+    "pet": 1,
+    "kitten": 1,
+    "gray": 1,
+    "surprise": 7,
+    "basket": 1,
+    "soft": 1,
+    "birthday": 3,
+    "lap": 12
+   },
+   "modes": {
+    "listen": 27
+   },
+   "speeds": {
+    "1": 27
+   },
+   "days": 1,
+   "lastSeen": 1789215734287,
+   "_at": 1789215736
+  }
+ ]
+}
