@@ -192,6 +192,21 @@ ntfy drops messages after about half a day. The newest message per child is
 always the whole picture. Sends happen every five minutes, when the app is
 closed, and on demand.
 
+### One child, several devices
+
+A child may read on a laptop, a phone and a tablet. Each device keeps its own
+IndexedDB and so its own totals, and each posts them separately — so every
+message carries a device id, and the progress page holds the newest message
+*per device* before adding them up. Without that, the last device used would
+hide the rest and the totals would appear to fall when a child switched.
+
+Counts add. **Dates are a union**, so reading on a laptop and a phone the same
+afternoon is one day, not two. Word tallies merge.
+
+There is no login across devices — each one is asked for the PIN once — and
+nothing syncs between them. The joining happens on the teacher's side, from
+what each device reports.
+
 ### Keeping a history
 
 ntfy forgets a message after about half a day, so it only ever holds where

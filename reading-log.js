@@ -188,6 +188,22 @@ function roll(type, d){
 function save(){ if(session) put("sessions", session).catch(()=>{}); }
 
 /* ---------- sending ---------- */
+/* A stable name for this device. One child may read on a laptop, a phone and
+   a tablet, and each keeps its own IndexedDB and so its own totals. Messages
+   carry this so the teacher's page can hold the newest per device and add
+   them up, rather than letting the last device used hide the others.        */
+function deviceId(){
+  try{
+    let d = localStorage.getItem("device");
+    if(!d){
+      d = (navigator.platform||"dev").replace(/[^A-Za-z]/g,"").slice(0,6).toLowerCase()
+          + "-" + Math.random().toString(36).slice(2,7);
+      localStorage.setItem("device", d);
+    }
+    return d;
+  }catch(e){ return "unknown"; }
+}
+
 function topic(){
   try{
     const fromUrl = new URLSearchParams(location.search).get("t");
@@ -207,7 +223,8 @@ function cumulative(list, who){
              visits:mine.length, minutes:0, pages:0, sentences:0, rereads:0,
              wordTaps:0, glossary:0, quizzes:0, quizRight:0, quizTotal:0,
              practiceGot:0, practiceAll:0,
-             books:{}, tapped:{}, lookedUp:{}, modes:{}, speeds:{}, days:{}};
+             books:{}, tapped:{}, lookedUp:{}, modes:{}, speeds:{}, days:{},
+             device:deviceId()};
   mine.forEach(s=>{
     t.minutes += (s.last - s.start)/60000;
     ["pages","sentences","rereads","wordTaps","glossary","quizzes",
@@ -218,7 +235,17 @@ function cumulative(list, who){
     if(s.last > (t.lastSeen||0)) t.lastSeen = s.last;
   });
   t.minutes = Math.round(t.minutes*10)/10;
-  t.days = Object.keys(t.days).length;
+  // the dates themselves, so two devices used on the same day count once
+  t.dates = Object.keys(t.days).sort().slice(-120);
+  t.days = t.dates.length;
+  // ntfy caps a message at 4096 bytes and these grow all term, so keep the
+  // long tail out of what is sent — the full log stays on the device
+  ["tapped","lookedUp","books","modes","speeds"].forEach(k=>{
+    const keep = {}, n = k === "tapped" || k === "lookedUp" ? 25 : 12;
+    Object.keys(t[k]).sort((a,b)=>t[k][b]-t[k][a]).slice(0,n)
+      .forEach(w=>keep[w]=t[k][w]);
+    t[k] = keep;
+  });
   return t;
 }
 
@@ -226,7 +253,7 @@ function cumulative(list, who){
 function asText(t){
   const acc = t.practiceAll ? Math.round(t.practiceGot/t.practiceAll*100)+"%" : "-";
   return [
-    t.name + " · " + new Date().toISOString().slice(0,16).replace("T"," "),
+    t.name + " · " + t.device + " · " + new Date().toISOString().slice(0,16).replace("T"," "),
     "minutes " + t.minutes + "  days " + t.days + "  visits " + t.visits +
       "  pages " + t.pages + "  sentences " + t.sentences,
     "accuracy " + acc + "  quiz " + t.quizRight + "/" + t.quizTotal +
@@ -292,6 +319,7 @@ global.Track = {
   summary: summary,
   meta: meta,
   topic: topic,
+  deviceId: deviceId,
   cumulative: cumulative,
   ntfy: NTFY,
   clear: () => open().then(()=>Promise.all(["events","sessions"].map(st=>

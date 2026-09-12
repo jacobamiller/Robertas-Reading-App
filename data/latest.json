@@ -1,11 +1,16 @@
 {
- "taken": "2026-09-12T12:25:32+00:00",
+ "taken": "2026-09-12T12:48:03+00:00",
  "readers": [
   {
    "student": "uz57",
    "name": "Roberta",
-   "visits": 2,
+   "devices": [
+    "unknown"
+   ],
+   "dates": [],
+   "lastSeen": 1789214322320,
    "minutes": 5,
+   "visits": 2,
    "pages": 8,
    "sentences": 26,
    "rereads": 0,
@@ -48,38 +53,50 @@
    "speeds": {
     "1": 26
    },
-   "days": 1,
-   "lastSeen": 1789214322320,
-   "_at": 1789215852
+   "days": 0
   },
   {
    "student": "ynty",
    "name": "Jacob",
-   "visits": 3,
-   "minutes": 1.6,
-   "pages": 6,
-   "sentences": 27,
+   "devices": [
+    "unknown",
+    "macbook-aa111",
+    "android-bb222",
+    "imac-cc333",
+    "iphone-dd444"
+   ],
+   "dates": [
+    "2026-09-12"
+   ],
+   "lastSeen": 1789217213225,
+   "minutes": 113.2,
+   "visits": 12,
+   "pages": 22,
+   "sentences": 75,
    "rereads": 0,
    "wordTaps": 0,
-   "glossary": 27,
+   "glossary": 43,
    "quizzes": 1,
    "quizRight": 2,
    "quizTotal": 5,
    "practiceGot": 0,
    "practiceAll": 0,
    "books": {
-    "lindas-surprise": 1
+    "lindas-surprise": 1,
+    "big-blue-bus": 8
    },
    "tapped": {},
    "lookedUp": {
     "pet": 1,
     "kitten": 1,
-    "gray": 1,
+    "gray": 5,
     "surprise": 7,
     "basket": 1,
     "soft": 1,
     "birthday": 3,
-    "lap": 12
+    "lap": 12,
+    "bus": 8,
+    "village": 4
    },
    "modes": {
     "listen": 27
@@ -87,9 +104,7 @@
    "speeds": {
     "1": 27
    },
-   "days": 1,
-   "lastSeen": 1789215734287,
-   "_at": 1789215736
+   "days": 1
   }
  ]
 }

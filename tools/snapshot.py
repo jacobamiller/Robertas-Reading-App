@@ -23,7 +23,7 @@ CSV = os.path.join(DATA, "history.csv")
 COLS = ["taken", "student", "name", "minutes", "days", "visits", "pages",
         "sentences", "rereads", "wordTaps", "glossary", "quizRight", "quizTotal",
         "practiceGot", "practiceAll", "accuracy", "books", "topTapped",
-        "topLookedUp", "lastSeen"]
+        "topLookedUp", "devices", "lastSeen"]
 
 
 def top(d, n):
@@ -37,7 +37,7 @@ def fetch(topic):
         raw = urllib.request.urlopen(url, timeout=30).read().decode()
     except Exception as e:
         sys.exit(f"could not reach ntfy: {e}")
-    latest = {}
+    per_device = {}
     for line in raw.strip().splitlines():
         if not line.strip():
             continue
@@ -53,10 +53,45 @@ def fetch(topic):
             t = json.loads(jline[5:])
         except ValueError:
             continue
-        if t["student"] not in latest or msg.get("time", 0) > latest[t["student"]]["_at"]:
+        key = (t["student"], t.get("device", "unknown"))
+        if key not in per_device or msg.get("time", 0) > per_device[key]["_at"]:
             t["_at"] = msg.get("time", 0)
-            latest[t["student"]] = t
-    return list(latest.values())
+            per_device[key] = t
+    return add_up(per_device.values())
+
+
+NUM = ["minutes", "visits", "pages", "sentences", "rereads", "wordTaps",
+       "glossary", "quizzes", "quizRight", "quizTotal", "practiceGot", "practiceAll"]
+DICT = ["books", "tapped", "lookedUp", "modes", "speeds"]
+
+
+def add_up(per_device):
+    """One row per child, their devices added together. A child may read on a
+    laptop and a phone, and each device only knows its own totals."""
+    by = {}
+    for d in per_device:
+        t = by.setdefault(d["student"], {
+            "student": d["student"], "name": d.get("name", ""), "devices": [],
+            "dates": set(), "lastSeen": 0,
+            **{k: 0 for k in NUM}, **{k: {} for k in DICT}})
+        t["name"] = d.get("name") or t["name"]
+        dev = d.get("device", "unknown")
+        if dev not in t["devices"]:
+            t["devices"].append(dev)
+        for k in NUM:
+            t[k] += d.get(k, 0) or 0
+        for k in DICT:
+            for w, n in (d.get(k) or {}).items():
+                t[k][w] = t[k].get(w, 0) + n
+        t["dates"].update(d.get("dates") or [])
+        t["lastSeen"] = max(t["lastSeen"], d.get("lastSeen", 0) or 0)
+    out = []
+    for t in by.values():
+        t["minutes"] = round(t["minutes"], 1)
+        t["days"] = len(t["dates"])
+        t["dates"] = sorted(t["dates"])
+        out.append(t)
+    return out
 
 
 def row(t, taken):
@@ -72,6 +107,7 @@ def row(t, taken):
                      if t.get("practiceAll") else ""),
         "books": top(t.get("books"), 8), "topTapped": top(t.get("tapped"), 12),
         "topLookedUp": top(t.get("lookedUp"), 12),
+        "devices": " ".join(t.get("devices", [])),
         "lastSeen": (datetime.fromtimestamp(t["lastSeen"] / 1000, timezone.utc)
                      .isoformat(timespec="seconds") if t.get("lastSeen") else ""),
     }
@@ -104,10 +140,29 @@ def main():
         print(f"{len(rows)} reader(s), none with anything new since the last snapshot")
         return
 
-    new_file = not os.path.exists(CSV)
+    # a run that adds a column would otherwise append wider rows under the old
+    # header, so rewrite the file when the shape has changed
+    existing, header = [], None
+    if os.path.exists(CSV):
+        with open(CSV, newline="") as f:
+            rd = csv.DictReader(f)
+            header = rd.fieldnames
+            existing = list(rd)
+    if header is not None and header != COLS:
+        for r in existing:
+            for c in COLS:
+                r.setdefault(c, "")
+        with open(CSV, "w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=COLS, extrasaction="ignore")
+            w.writeheader()
+            for r in existing:
+                w.writerow({c: r.get(c, "") for c in COLS})
+        print(f"  (history.csv grew a column — rewrote {len(existing)} earlier row(s))")
+        header = COLS
+
     with open(CSV, "a", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=COLS)
-        if new_file:
+        w = csv.DictWriter(f, fieldnames=COLS, extrasaction="ignore")
+        if header is None:
             w.writeheader()
         for r in fresh:
             w.writerow(r)

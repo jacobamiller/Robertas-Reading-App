@@ -124,17 +124,45 @@ async function fromNtfy(){
   if(!r.ok) throw new Error("ntfy said " + r.status);
   const txt = (await r.text()).trim();
   if(!txt) return [];
-  const latest = {};
+  // newest message per device, because one child on a laptop and a phone
+  // sends two sets of totals and neither is the whole story
+  const perDevice = {};
   txt.split("\n").forEach(line=>{
     let m; try{ m = JSON.parse(line); }catch(e){ return; }
-    const body = m.message || "";
-    const j = body.split("\n").find(l=>l.indexOf("json ") === 0);
+    const j = (m.message||"").split("\n").find(l=>l.indexOf("json ") === 0);
     if(!j) return;
-    let t2; try{ t2 = JSON.parse(j.slice(5)); }catch(e){ return; }
-    if(!latest[t2.student] || (m.time||0) > latest[t2.student]._at)
-      { t2._at = m.time||0; latest[t2.student] = t2; }
+    let d; try{ d = JSON.parse(j.slice(5)); }catch(e){ return; }
+    const key = d.student + "|" + (d.device || "unknown");
+    if(!perDevice[key] || (m.time||0) > perDevice[key]._at)
+      { d._at = m.time||0; perDevice[key] = d; }
   });
-  return Object.values(latest);
+  return addUp(Object.values(perDevice));
+}
+
+/* One row per child, adding their devices together. Counts add; dates are a
+   union, so a day read on two devices is still one day; word tallies merge. */
+function addUp(perDevice){
+  const NUM = ["minutes","visits","pages","sentences","rereads","wordTaps",
+               "glossary","quizzes","quizRight","quizTotal","practiceGot","practiceAll"];
+  const DICT = ["books","tapped","lookedUp","modes","speeds"];
+  const by = {};
+  perDevice.forEach(d=>{
+    const t = by[d.student] = by[d.student] ||
+      Object.assign({student:d.student, name:d.name, devices:[], dateSet:{}},
+        NUM.reduce((o,k)=>(o[k]=0,o),{}), DICT.reduce((o,k)=>(o[k]={},o),{}));
+    t.name = d.name || t.name;
+    if(t.devices.indexOf(d.device||"unknown") < 0) t.devices.push(d.device||"unknown");
+    NUM.forEach(k=>t[k] += d[k]||0);
+    DICT.forEach(k=>Object.keys(d[k]||{}).forEach(w=>t[k][w]=(t[k][w]||0)+d[k][w]));
+    (d.dates||[]).forEach(x=>t.dateSet[x]=1);
+    if((d.lastSeen||0) > (t.lastSeen||0)) t.lastSeen = d.lastSeen;
+  });
+  return Object.values(by).map(t=>{
+    t.minutes = Math.round(t.minutes*10)/10;
+    t.days = Object.keys(t.dateSet).length;
+    delete t.dateSet;
+    return t;
+  });
 }
 
 function renderEveryone(rows){
@@ -142,7 +170,7 @@ function renderEveryone(rows){
   rows.sort((a,b)=>b.minutes-a.minutes);
   let h='<table><tr><th>Reader</th><th class="n">Minutes</th><th class="n">Days</th>'
    +'<th class="n">Pages</th><th class="n">Accuracy</th><th class="n">Quiz</th>'
-   +'<th class="n">Re-reads</th><th>Last seen</th></tr>';
+   +'<th class="n">Re-reads</th><th class="n">Devices</th><th>Last seen</th></tr>';
   rows.forEach(t=>{
     const acc = t.practiceAll ? Math.round(t.practiceGot/t.practiceAll*100)+"%" : "—";
     h+='<tr><td><b>'+esc(t.name)+'</b></td><td class="n">'+t.minutes+'</td>'
@@ -150,6 +178,7 @@ function renderEveryone(rows){
       +'<td class="n">'+acc+'</td>'
       +'<td class="n">'+(t.quizTotal?t.quizRight+"/"+t.quizTotal:"—")+'</td>'
       +'<td class="n">'+t.rereads+'</td>'
+      +'<td class="n" title="'+esc((t.devices||[]).join(", "))+'">'+(t.devices||[]).length+'</td>'
       +'<td>'+(t.lastSeen?new Date(t.lastSeen).toLocaleDateString():"—")+'</td></tr>';
   });
   h+='</table>';
