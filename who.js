@@ -158,6 +158,8 @@ function enter(st){
 }
 
 async function init(){
+  // let any session already in progress load before a name is chosen
+  if(global.Track && Track.preload){ try{ await Track.preload(); }catch(e){} }
   try{
     const r = await fetch(ROSTER, {cache:"no-cache"});
     roster = (await r.json()).students || [];

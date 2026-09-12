@@ -67,8 +67,20 @@ function meta(k, v){
 /* ---------- session ---------- */
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,8);
 
+/* A visit, not a page load. Moving from the library into a book is the same
+   sitting, so the session id rides in sessionStorage and the counters carry
+   on rather than starting over — otherwise "sessions" just counts navigations
+   and the minutes come out halved. */
 function startSession(who){
   student = who || null;
+  const prior = resume(who);
+  if(prior){
+    session = prior;
+    if(flushTimer) clearInterval(flushTimer);
+    flushTimer = setInterval(()=>flush("timer"), FLUSH_MS);
+    drain();
+    return session;
+  }
   session = {
     id: uid(),
     student: student ? student.code : "?",
@@ -82,21 +94,60 @@ function startSession(who){
     practiceGot: 0, practiceAll: 0,
     booksOpened: {}, lastPage: null, sent: false
   };
+  try{ sessionStorage.setItem("sid", session.id); }catch(e){}
   log("session_start", {});
+  drain();
   if(flushTimer) clearInterval(flushTimer);
   flushTimer = setInterval(()=>flush("timer"), FLUSH_MS);
   return session;
 }
 
+let resumed = null;   // filled by preload() before the picker runs
+function resume(who){
+  let sid = null;
+  try{ sid = sessionStorage.getItem("sid"); }catch(e){}
+  if(!sid || !resumed || resumed.id !== sid) return null;
+  if(who && resumed.student !== who.code) return null;   // a different child
+  resumed.last = Date.now();
+  return resumed;
+}
+/* The picker is synchronous once the roster is in, but IndexedDB is not, so
+   the session in progress is fetched up front and waiting. */
+function preload(){
+  let sid = null;
+  try{ sid = sessionStorage.getItem("sid"); }catch(e){}
+  if(!sid) return Promise.resolve(null);
+  return all("sessions").then(list=>{
+    resumed = list.find(x=>x.id === sid) || null;
+    return resumed;
+  }).catch(()=>null);
+}
+
 /* Every event lands in the detailed local log and also moves the session
    counters, so the summary is always current without a replay. */
+/* The book loads on its own schedule and often beats the "who is reading"
+   screen, so anything logged before a session exists is held and replayed
+   rather than dropped — otherwise the first book_open and page_view of every
+   visit go missing. */
+const pending = [];
 function log(type, data){
-  if(!session) return;
+  if(!session){ pending.push([type, data||{}, Date.now()]); return; }
   session.last = Date.now();
   const ev = {ts:Date.now(), student:session.student, session:session.id,
               type:type, data:data||{}};
   put("events", ev).catch(()=>{});
   roll(type, data||{});
+  save();
+}
+
+function drain(){
+  while(pending.length){
+    const [t, d, ts] = pending.shift();
+    session.last = Math.max(session.last, ts);
+    put("events", {ts:ts, student:session.student, session:session.id,
+                   type:t, data:d}).catch(()=>{});
+    roll(t, d);
+  }
   save();
 }
 
@@ -177,6 +228,7 @@ function mark(rows){
 /* ---------- exports ---------- */
 global.Track = {
   start: startSession,
+  preload: preload,
   log: log,
   flush: flush,
   session: () => session,
