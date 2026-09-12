@@ -161,7 +161,11 @@ async function init(){
   // let any session already in progress load before a name is chosen
   if(global.Track && Track.preload){ try{ await Track.preload(); }catch(e){} }
   try{
-    const r = await fetch(ROSTER, {cache:"no-cache"});
+    // GitHub Pages serves this with max-age=600, so a PIN or a new child would
+    // otherwise take ten minutes to take effect — and the child in front of you
+    // is told their own number is wrong. The file is a few hundred bytes, so
+    // fetch it fresh every time and let the roster be true immediately.
+    const r = await fetch(ROSTER + "?_=" + Date.now(), {cache:"no-store"});
     roster = (await r.json()).students || [];
   }catch(e){ roster = []; }
   if(!roster.length){                       // no roster: track anonymously
