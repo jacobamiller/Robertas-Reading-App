@@ -1,0 +1,53 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reading stats</title>
+<style>
+:root{--paper:#FFFDF7;--ink:#1E1B18;--faded:#8d8780;--line:#E4DED2;
+      --green:#4E9A3E;--blue:#2C6FB5;--red:#D93A2B}
+*{box-sizing:border-box}
+body{margin:0;padding:20px 16px 60px;background:var(--paper);color:var(--ink);
+  font:16px ui-rounded,"SF Pro Rounded","Avenir Next",system-ui,sans-serif;
+  max-width:860px;margin:0 auto;line-height:1.5}
+h1{font-size:22px;margin:0 0 2px}
+h2{font-size:16px;margin:30px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--line)}
+.sub{color:var(--faded);font-size:13.5px;margin:0 0 18px}
+.note{background:#FFFBEB;border:1px solid #e8d9a8;border-radius:10px;padding:11px 13px;
+  font-size:13.5px;color:#5a4a20;margin:16px 0}
+.cards{display:flex;flex-wrap:wrap;gap:11px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px 15px;
+  min-width:132px;flex:1}
+.card b{display:block;font-size:25px;line-height:1.15}
+.card span{color:var(--faded);font-size:12.5px}
+table{border-collapse:collapse;width:100%;font-size:14px;margin-top:6px}
+th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--faded);font-weight:600;font-size:12.5px;text-transform:uppercase;letter-spacing:.03em}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar{height:7px;border-radius:4px;background:var(--green);display:inline-block;vertical-align:middle}
+.pill{display:inline-block;background:#F0EAE0;border-radius:20px;padding:2px 9px;margin:2px 3px 2px 0;font-size:13px}
+.pill b{color:var(--red)}
+button{font:inherit;font-size:14px;padding:9px 15px;border-radius:10px;border:2px solid var(--line);
+  background:#fff;cursor:pointer;margin:3px 6px 3px 0}
+button:active{background:#F0EAE0}
+.danger{color:var(--red);border-color:#f0c9c4}
+#empty{color:var(--faded);padding:26px 0}
+</style></head><body>
+
+<h1>Reading stats</h1>
+<p class="sub" id="scope">Reading this device…</p>
+
+<div class="note"><b>This page shows only what happened on this device.</b>
+Each child's phone keeps its own record, so to see everyone in one place you
+need the sending step — see the bottom of this page.</div>
+
+<div id="out"><div id="empty">No reading recorded on this device yet.</div></div>
+
+<h2>Data</h2>
+<button id="csv">Download CSV</button>
+<button id="json">Download JSON</button>
+<button id="send">Send now</button>
+<button id="wipe" class="danger">Erase this device's data</button>
+<p class="sub" id="sendmsg"></p>
+
+<script src="track.js?v=1789208876"></script>
+<script src="stats.js?v=1789209127"></script>
+</body></html>

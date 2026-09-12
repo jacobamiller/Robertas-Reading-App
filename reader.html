@@ -278,6 +278,8 @@ audio{width:100%;margin-top:10px}
 <p class="stagenote">Phone preview — resize narrow, or open on a phone, for the real thing</p>
 </div><!--stage-->
 
+<script src="track.js?v=1789208876"></script>
+<script src="who.js?v=1789208876"></script>
 <script>
 /* ---------- which book? ---------- */
 const DEFAULT_BOOK = "lindas-surprise";
@@ -343,6 +345,7 @@ function prefetch(i){
 }
 function drawPage(){
   const p=PAGES[page];
+  Track&&Track.log("page_view",{slug:slug,page:page+1});
   $("pic").src=imgSrc(p.img);
   $("pgnum").textContent=(page+1)+" / "+PAGES.length;
   const box=$("text"); box.innerHTML=""; tokens=[];
@@ -454,6 +457,7 @@ function playClip(url,marks,then,fallback,adjust){
 /* ---------- speaking ---------- */
 function speakSentence(si,then){
   curSent=si;
+  Track&&Track.log("sentence_read",{slug:slug,page:page+1,si:si,mode:mode,rate:rate});
   clearHi(); clearTimers(); stopClip();
   const sentEl=document.querySelector('.sent[data-si="'+si+'"]');
   if(sentEl) sentEl.classList.add("on");
@@ -516,7 +520,9 @@ function readPage(from){
         },Math.max(1600,PAGES[page].s[si].length*80)));
       } else {
         listenTo(si,hit=>{
-          if(hit) scores.push({got:hit.filter(Boolean).length, all:hit.length});
+          if(hit){ scores.push({got:hit.filter(Boolean).length, all:hit.length});
+            Track&&Track.log("practice_result",{slug:slug,page:page+1,
+              got:hit.filter(Boolean).length, all:hit.length}); }
           $("hint").textContent="";
           if(!speaking) return;
           timers.push(setTimeout(()=>step(si+1),1100));
@@ -639,6 +645,7 @@ function showResult(){
   const got=scores.reduce((a,b)=>a+b.got,0), all=scores.reduce((a,b)=>a+b.all,0);
   if(!all) return;
   const pct=Math.round(got/all*100);
+  Track&&Track.log("page_result",{slug:slug,page:page+1,got:got,all:all,pct:pct});
   const full=pct>=90?3:pct>=70?2:1;
   const stars="★".repeat(full)+"☆".repeat(3-full);
   const d=document.createElement("div"); d.className="result"; d.id="result";
@@ -668,6 +675,7 @@ document.querySelectorAll(".mode").forEach(b=>{
   b.onclick=()=>{
     stopAll(); clearMarks(); scores=[];
     mode=b.dataset.mode;
+    Track&&Track.log("mode_change",{mode:mode});
     document.querySelectorAll(".mode").forEach(x=>x.classList.toggle("on",x===b));
     $("play").textContent=LABEL[mode];
     if(mode==="practice"&&!SR) $("hint").textContent="Scoring needs Chrome and an internet connection.";
@@ -677,13 +685,17 @@ $("prev").onclick=()=>{stopAll();scores=[];page--;drawPage();$("screen").scrollT
 $("next").onclick=()=>{stopAll();scores=[];page++;drawPage();$("screen").scrollTop=0};
 $("text").onclick=e=>{
   const w=e.target.closest(".w");
-  if(w){ if(speaking) stopAll(); say(w.textContent); return; }
+  if(w){ if(speaking) stopAll();
+    // a tapped word is a word the child did not know
+    Track&&Track.log("word_tap",{slug:slug,word:w.textContent.replace(/[^A-Za-z']/g,"")});
+    say(w.textContent); return; }
   const s=e.target.closest(".sent");
   if(s){ if(speaking) stopAll(); speaking=false; speakSentence(+s.dataset.si); }
 };
 document.querySelectorAll("[data-rate]").forEach(b=>{
   b.onclick=()=>{
     rate=parseFloat(b.dataset.rate);
+    Track&&Track.log("speed_change",{rate:rate});
     try{ localStorage.setItem("rate",rate); }catch(e){}
     if(clip) clip.playbackRate=audioRate();
     document.querySelectorAll("[data-rate]").forEach(x=>x.classList.remove("on"));
@@ -694,6 +706,7 @@ document.querySelectorAll("[data-rate]").forEach(b=>{
 document.querySelectorAll("[data-rate]").forEach(b=>{
   b.classList.toggle("on", parseFloat(b.dataset.rate)===rate);
 });
+Who&&Who.init();
 const sampleLine=()=>(BOOK&&BOOK.voiceSample)||"This is how I will read to you.";
 $("voicesel").onchange=e=>{
   const m=enVoices().find(x=>x.name===e.target.value);
@@ -752,7 +765,7 @@ function drawWords(){
     const d=document.createElement("div"); d.className="word";
     d.innerHTML='<b>'+w.w+'</b><span><span class="zh">'+w.zh+'</span><br>'+w.en+'</span>';
     const b=document.createElement("button"); b.className="say"; b.textContent="🔊";
-    b.onclick=()=>say(w.w); d.appendChild(b); v.appendChild(d);
+    b.onclick=()=>{Track&&Track.log("glossary_word",{slug:slug,word:w.w});say(w.w)}; d.appendChild(b); v.appendChild(d);
   });
 }
 function drawQuiz(){
@@ -769,10 +782,12 @@ function drawQuiz(){
         if(oi===q.a){b.classList.add("right");score++;}
         else{b.classList.add("wrong");
              wrapEl.querySelectorAll(".opt")[q.a].classList.add("right");}
+        Track&&Track.log("quiz_answer",{slug:slug,qi:qi,correct:oi===q.a});
         say(oi===q.a?"Yes! Well done.":"Not this time.");
         if(done===QUIZ.length){
           const s=document.createElement("div"); s.className="score";
           s.textContent="You got "+score+" out of "+QUIZ.length;
+          Track&&Track.log("quiz_done",{slug:slug,score:score,total:QUIZ.length});
           const again=document.createElement("button"); again.className="again";
           again.textContent="Try again"; again.onclick=drawQuiz;
           v.appendChild(s); v.appendChild(again);
@@ -840,6 +855,7 @@ async function loadBook(){
   document.querySelector('.tab[data-v="words"]').style.display=WORDS.length?"":"none";
   document.querySelector('.tab[data-v="quiz"]').style.display=QUIZ.length?"":"none";
 
+  Track&&Track.log("book_open",{slug:slug,title:BOOK.title});
   $("startBtn").disabled=false;
   $("startBtn").textContent="Start reading";
   prefetch(0);

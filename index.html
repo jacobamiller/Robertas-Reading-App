@@ -82,6 +82,8 @@ h1{font-size:30px;line-height:1.15;margin:6px 0 2px;font-weight:800;letter-spaci
 <p class="stagenote">Phone preview — resize narrow, or open on a phone, for the real thing</p>
 </div><!--stage-->
 
+<script src="track.js?v=1789208876"></script>
+<script src="who.js?v=1789208876"></script>
 <script>
 const $=id=>document.getElementById(id);
 
@@ -124,7 +126,8 @@ async function build(){
   const shelf=$("shelf"); shelf.innerHTML="";
   ok.forEach(b=>{
     const a=document.createElement("a");
-    a.className="card"; a.href="reader.html?book="+encodeURIComponent(b.slug);
+    a.className="card"; a.href="reader.html?book="+encodeURIComponent(b.slug)
+      +(Who&&Who.current()?"&s="+Who.current().code:"");
     const im=document.createElement("img");
     im.src=b.cover; im.alt=b.title+" cover"; im.loading="lazy";
     const meta=document.createElement("div"); meta.className="meta";
@@ -145,3 +148,16 @@ build();
 </script>
 </body>
 </html>
+<script>
+// the book grid and the "who is reading" screen resolve independently, so
+// stamp the child onto the links whichever finishes first
+function tagLinks(){
+  const w = Who && Who.current(); if(!w) return;
+  document.querySelectorAll('a.card[href^="reader.html"]').forEach(a=>{
+    if(a.href.indexOf("&s=")<0) a.href += "&s=" + w.code;
+  });
+}
+document.addEventListener("who", tagLinks);
+new MutationObserver(tagLinks).observe(document.body,{childList:true,subtree:true});
+Who&&Who.init();
+</script>
